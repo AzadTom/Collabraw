@@ -25,7 +25,7 @@ function Editor() {
 
   const stageRef = useRef<any>(null);
   const [action, setAction] = useState<string>(ACTIONS.SELECT);
-  const [fillcolor, setFillColor] = useState<string>("ffffff");
+  const [fillcolor, setFillColor] = useState<string>(isDark ? "#ffffff":"#000000");
   const currentShapeId = useRef<any>(null);
   const isPainting = useRef<boolean>(false);
   const transformRef = useRef<any>(null);
