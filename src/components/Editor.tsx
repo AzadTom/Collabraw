@@ -344,7 +344,6 @@ function Editor() {
   return (
     <>
       <div className="container">
-
         <Controls handleExport={handleExport} action={action} setAction={setAction} fillcolor={fillcolor} setFillColor={(value: string) => setFillColor(value)} handleFileChange={(event: React.ChangeEvent<HTMLInputElement>) => handleFileChange(event)} />
         <Stage
           ref={stageRef}
