@@ -30,8 +30,7 @@ const Controls:React.FC<Props> = ({handleExport,action,setAction,fillcolor,setFi
  
   return (
     <div className="parent-container">
-
-      <ul className="controls-container">
+      <ul className="controls-container bg-[var(--background)]">
         <li className={action== ACTIONS.SELECT? "active":""} onClick={()=> setAction(ACTIONS.SELECT)}> <FaArrowPointer/></li>
         <li className={action == ACTIONS.RECTANGLE? "active":""} onClick={()=> setAction(ACTIONS.RECTANGLE)}> <BiRectangle /></li>
         <li className={action== ACTIONS.CIRCLE ? "active":""} onClick={()=> setAction(ACTIONS.CIRCLE)}> <FaRegCircle /></li>
@@ -40,9 +39,7 @@ const Controls:React.FC<Props> = ({handleExport,action,setAction,fillcolor,setFi
         <li className='input-color'><input type="color" value={fillcolor}  onChange={(e:React.ChangeEvent<HTMLInputElement>)=> setFillColor(e.target.value)}/> </li>
         <li> <label htmlFor="image"><GrGallery/></label>  <input id='image' type="file"  style={{display:"none"}} onChange={handleFileChange} accept='image/*'/> </li>
         <li onClick={handleExport}> <IoMdDownload /></li>
-       
       </ul>
-    
     </div>
   )
 }

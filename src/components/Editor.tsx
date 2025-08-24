@@ -13,6 +13,7 @@ import URLImage from "./URLImage";
 import { ArrowType, RectangleType, ScribbleType, CircleType, ImageType } from "../types/PainTypes";
 
 import { io } from 'socket.io-client';
+import { useTheme } from "./ThemeProvider/ThemeProvider";
 
 
 const socket = io('https://white-board-backend-socket.vercel.app/');
@@ -20,12 +21,11 @@ const socket = io('https://white-board-backend-socket.vercel.app/');
 
 function Editor() {
 
+  const {isDark} = useTheme();
+
   const stageRef = useRef<any>(null);
-
   const [action, setAction] = useState<string>(ACTIONS.SELECT);
-
   const [fillcolor, setFillColor] = useState<string>("ffffff");
-
   const currentShapeId = useRef<any>(null);
   const isPainting = useRef<boolean>(false);
   const transformRef = useRef<any>(null);
@@ -343,7 +343,7 @@ function Editor() {
 
   return (
     <>
-      <div className="container">
+      <div className="relative">
         <Controls handleExport={handleExport} action={action} setAction={setAction} fillcolor={fillcolor} setFillColor={(value: string) => setFillColor(value)} handleFileChange={(event: React.ChangeEvent<HTMLInputElement>) => handleFileChange(event)} />
         <Stage
           ref={stageRef}
@@ -359,7 +359,7 @@ function Editor() {
               y={0}
               width={window.innerWidth}
               height={window.innerHeight}
-              fill="#f5f5f5"
+              fill={isDark ? '#000000':'#f5f5f5'}
               id="bg"
               onClick={() => {
                 transformRef?.current?.nodes([]);
