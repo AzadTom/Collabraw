@@ -15,13 +15,9 @@ interface Props {
 
 const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
   const [showPicker, setShowPicker] = useState(false);
-
-  // Preset colors (can expand like Canva/Figma)
-  const presetColors = ["#000000", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#FF00FF", "#00FFFF", "#FFFFFF"];
-
   return (
     <div className="parent-container">
-      <ul className="controls-container bg-[var(--background)] flex gap-2 p-2 rounded-xl shadow-md items-center">
+      <ul className="controls-container bg-[var(--background)] p-2 rounded-xl shadow-md items-center">
         <li className={action == ACTIONS.SELECT ? "active p-2" : ""} onClick={() => setAction(ACTIONS.SELECT)}>
           <MousePointer2 />
         </li>
@@ -37,10 +33,7 @@ const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor,
         <li className={action == ACTIONS.ARROW ? "active p-2" : ""} onClick={() => setAction(ACTIONS.ARROW)}>
           <MoveRight />
         </li>
-
-        {/* Modern Color Picker */}
         <li className="relative">
-          {/* Swatch button */}
           <div
             className={cn(
               "w-8 h-8 rounded-md border shadow-sm cursor-pointer flex items-center justify-center transition-all",
@@ -49,27 +42,12 @@ const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor,
             style={{ backgroundColor: fillcolor }}
             onClick={() => setShowPicker(!showPicker)}
           />
-
-          {/* Dropdown Picker */}
           {showPicker && (
             <div className="absolute top-10 left-0 z-50 bg-white p-3 rounded-xl shadow-lg flex flex-col gap-2">
               <HexColorPicker color={fillcolor} onChange={setFillColor} />
-
-              {/* Preset Colors */}
-              <div className="flex gap-2 flex-wrap mt-2">
-                {presetColors.map((color) => (
-                  <button
-                    key={color}
-                    onClick={() => setFillColor(color)}
-                    className="w-6 h-6 rounded-full border shadow-sm cursor-pointer hover:scale-110 transition-transform"
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
             </div>
           )}
         </li>
-
         <li>
           <label htmlFor="image" className="cursor-pointer">
             <Image />
@@ -86,3 +64,27 @@ const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor,
 }
 
 export default Controls;
+
+
+
+export const ZoomInOut = ({ handleZoomIn, handleZoomOut, zoom }: { handleZoomOut: () => void, handleZoomIn: () => void, zoom: number }) => {
+
+  return (
+    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-[var(--background)] shadow-md rounded-full px-4 py-2 text-sm" >
+      <button
+        onClick={handleZoomOut}
+        className="px-2 py-1 rounded bg-[var(--background)]"
+      >
+        -
+      </button>
+      <span className="w-16 text-center">{Math.round(zoom * 100)}%</span>
+      <button
+        onClick={handleZoomIn}
+        className="px-2 py-1 rounded bg-[var(--background)]"
+      >
+        +
+      </button>
+    </div>
+  )
+
+}
