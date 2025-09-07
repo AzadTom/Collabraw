@@ -327,6 +327,7 @@ export const useEditor = (socket: Socket<DefaultEventsMap, DefaultEventsMap>) =>
         handleExport,
         handleFileChange,
         onclick,
+        isDark,
         shapeControls,
         pointerEventHandler,
         controlProps,

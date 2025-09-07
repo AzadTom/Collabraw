@@ -5,15 +5,14 @@ import { ACTIONS } from "../utils/constant";
 import URLImage from "./URLImage";
 import { ArrowType, RectangleType, ScribbleType, CircleType } from "../types/PainTypes";
 import { io } from 'socket.io-client';
-import { useTheme } from "./ThemeProvider/ThemeProvider";
 import { useEditor, useZoomInOut } from "@/hooks/editor/useEditor";
 
 const socket = io('https://white-board-backend-socket.vercel.app/');
 
 function Editor() {
 
-  const { isDark } = useTheme();
-  const { stageRef, stagePos, action, fillcolor, images, transformRef, onclick,
+
+  const { stageRef, stagePos, action, fillcolor, images, transformRef, onclick,isDark,
     shapeControls, pointerEventHandler, controlProps } = useEditor(socket);
   const { arrows, setArrows, circles, setCircles, rectangles, setRectangles, scribbles, setScribble } = shapeControls;
   const { onpointerdown, onpointermove, onpointerup } = pointerEventHandler;
@@ -66,89 +65,87 @@ function Editor() {
 
 
   return (
-    <>
-      <section className="relative">
-        <Controls {...controlProps} />
-        <Stage
-          ref={stageRef}
-          width={window.innerWidth}
-          height={window.innerHeight}
-          scaleX={zoom}
-          scaleY={zoom}
-          x={stagePos.x}
-          y={stagePos.y}
-          onPointerDown={onpointerdown}
-          onPointerMove={onpointermove}
-          onPointerUp={onpointerup}
-        >
-          <Layer>
+    <section className="relative">
+      <Controls {...controlProps} />
+      <Stage
+        ref={stageRef}
+        width={window.innerWidth}
+        height={window.innerHeight}
+        scaleX={zoom}
+        scaleY={zoom}
+        x={stagePos.x}
+        y={stagePos.y}
+        onPointerDown={onpointerdown}
+        onPointerMove={onpointermove}
+        onPointerUp={onpointerup}
+      >
+        <Layer>
+          <Rect
+            x={0}
+            y={0}
+            width={window.innerWidth}
+            height={window.innerHeight}
+            fill={isDark ? "#000000" : "#f5f5f5"}
+            id="bg"
+            onClick={() => {
+              transformRef?.current?.nodes([]);
+            }}
+          />
+          {rectangles.map((rec) => (
             <Rect
-              x={0}
-              y={0}
-              width={window.innerWidth}
-              height={window.innerHeight}
-              fill={isDark ? "#000000" : "#f5f5f5"}
-              id="bg"
-              onClick={() => {
-                transformRef?.current?.nodes([]);
-              }}
+              key={rec.id}
+              x={rec.x}
+              y={rec.y}
+              fill={rec.fillcolor}
+              width={rec.width}
+              height={rec.height}
+              draggable={action === ACTIONS.SELECT}
+              onClick={onclick}
             />
-            {rectangles.map((rec) => (
-              <Rect
-                key={rec.id}
-                x={rec.x}
-                y={rec.y}
-                fill={rec.fillcolor}
-                width={rec.width}
-                height={rec.height}
-                draggable={action === ACTIONS.SELECT} 
-                onClick={onclick}
-              />
-            ))}
-            {circles.map((cir) => (
-              <Circle
-                key={cir.id}
-                x={cir.x}
-                y={cir.y}
-                radius={cir.radius}
-                fill={cir.fillcolor}
-                draggable={action === ACTIONS.SELECT}
-                onClick={onclick}
-              />
-            ))}
-            {arrows.map((arrow) => (
-              <Arrow
-                key={arrow.id}
-                points={arrow.points}
-                stroke={fillcolor}
-                strokeWidth={2}
-                fill={arrow.fillcolor}
-                draggable={action === ACTIONS.SELECT}
-                onClick={onclick}
-              />
-            ))}
-            {scribbles.map((scribble) => (
-              <Line
-                key={scribble.id}
-                points={scribble.points}
-                fill={scribble.fillcolor}
-                tension={0.5}
-                stroke={fillcolor}
-                strokeWidth={2}
-                lineCap="round"
-                lineJoin="round"
-                draggable={action === ACTIONS.SELECT}
-              />
-            ))}
-            {images.map((image, index) => (
-              <URLImage key={index * 3} image={image} onclick={onclick} />
-            ))}
-            <Transformer ref={transformRef} />
-          </Layer>
-        </Stage>
-        <ZoomInOut zoom={zoom} handleZoomIn={handleZoomIn} handleZoomOut={handleZoomOut} />
-      </section>
-    </>
+          ))}
+          {circles.map((cir) => (
+            <Circle
+              key={cir.id}
+              x={cir.x}
+              y={cir.y}
+              radius={cir.radius}
+              fill={cir.fillcolor}
+              draggable={action === ACTIONS.SELECT}
+              onClick={onclick}
+            />
+          ))}
+          {arrows.map((arrow) => (
+            <Arrow
+              key={arrow.id}
+              points={arrow.points}
+              stroke={fillcolor}
+              strokeWidth={2}
+              fill={arrow.fillcolor}
+              draggable={action === ACTIONS.SELECT}
+              onClick={onclick}
+            />
+          ))}
+          {scribbles.map((scribble) => (
+            <Line
+              key={scribble.id}
+              points={scribble.points}
+              fill={scribble.fillcolor}
+              tension={0.5}
+              stroke={fillcolor}
+              strokeWidth={2}
+              lineCap="round"
+              lineJoin="round"
+              draggable={action === ACTIONS.SELECT}
+            />
+          ))}
+          {images.map((image, index) => (
+            <URLImage key={index * 3} image={image} onclick={onclick} />
+          ))}
+          <Transformer ref={transformRef} />
+        </Layer>
+      </Stage>
+      <ZoomInOut zoom={zoom} handleZoomIn={handleZoomIn} handleZoomOut={handleZoomOut} />
+    </section>
   )
 }
 
