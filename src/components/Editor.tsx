@@ -13,11 +13,10 @@ const socket = io('https://white-board-backend-socket.vercel.app/');
 function Editor() {
 
   const { isDark } = useTheme();
-  const { stageRef, stagePos, action, arrows,
-    circles, fillcolor, images, rectangles,
-    scribbles, setArrows, setCircles,
-    setRectangles, setScribble, transformRef,
-    onclick, onpointermove, onpointerup, onpointerdown, controlProps } = useEditor(socket);
+  const { stageRef, stagePos, action, fillcolor, images, transformRef, onclick,
+    shapeControls, pointerEventHandler, controlProps } = useEditor(socket);
+  const { arrows, setArrows, circles, setCircles, rectangles, setRectangles, scribbles, setScribble } = shapeControls;
+  const { onpointerdown, onpointermove, onpointerup } = pointerEventHandler;
   const { zoom, handleZoomIn, handleZoomOut, } = useZoomInOut();
 
   useEffect(() => {
@@ -102,7 +101,7 @@ function Editor() {
                 fill={rec.fillcolor}
                 width={rec.width}
                 height={rec.height}
-                draggable={action === ACTIONS.SELECT} // ✅ Only draggable in select mode
+                draggable={action === ACTIONS.SELECT} 
                 onClick={onclick}
               />
             ))}

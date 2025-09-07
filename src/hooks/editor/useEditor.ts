@@ -76,15 +76,6 @@ export const useEditor = (socket: Socket<DefaultEventsMap, DefaultEventsMap>) =>
 
 
 
-    const controlProps = {
-        handleExport,
-        action,
-        setAction,
-        fillcolor,
-        setFillColor,
-        handleFileChange,
-    }
-
 
     // pointer up move down
     const onpointerdown = () => {
@@ -278,6 +269,37 @@ export const useEditor = (socket: Socket<DefaultEventsMap, DefaultEventsMap>) =>
 
 
 
+    const controlProps = {
+        handleExport,
+        action,
+        setAction,
+        fillcolor,
+        setFillColor,
+        handleFileChange,
+    }
+
+    const pointerEventHandler = {
+        onpointerdown,
+        onpointermove,
+        onpointerup
+    }
+
+    const shapeControls = {
+        arrows,
+        setArrows,
+        rectangles,
+        setRectangles,
+        scribbles,
+        setScribble,
+        circles,
+        setCircles
+    }
+
+
+    
+
+
+
 
 
 
@@ -305,9 +327,8 @@ export const useEditor = (socket: Socket<DefaultEventsMap, DefaultEventsMap>) =>
         handleExport,
         handleFileChange,
         onclick,
-        onpointerdown,
-        onpointermove,
-        onpointerup,
+        shapeControls,
+        pointerEventHandler,
         controlProps,
     }
 
