@@ -1,10 +1,12 @@
 import { ImageDown, Image, MousePointer2, Square, Circle, Pencil, MoveRight } from 'lucide-react';
 import React, { useState } from "react";
-import { ACTIONS } from "../utils/constant";
+import { ACTIONS } from "../../utils/constant";
 import { cn } from '@/lib/utils';
-import { HexColorPicker } from "react-colorful";
+import ColorPicker from 'react-pick-color';
+
 
 interface Props {
+  isDark:boolean,
   handleExport: () => void,
   action: string,
   setAction: (action: string) => void,
@@ -13,7 +15,7 @@ interface Props {
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
+const Controls: React.FC<Props> = ({isDark, handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
   const [showPicker, setShowPicker] = useState(false);
   return (
     <div className="parent-container">
@@ -43,8 +45,8 @@ const Controls: React.FC<Props> = ({ handleExport, action, setAction, fillcolor,
             onClick={() => setShowPicker(!showPicker)}
           />
           {showPicker && (
-            <div className="absolute top-10 left-0 z-50 bg-white p-3 rounded-xl shadow-lg flex flex-col gap-2">
-              <HexColorPicker color={fillcolor} onChange={setFillColor} />
+            <div className="absolute top-10 left-0 z-50  p-3 rounded-xl shadow-lg flex flex-col gap-2">
+              <ColorPicker  color={fillcolor} onChange={color =>setFillColor(color.hex)}/>
             </div>
           )}
         </li>
