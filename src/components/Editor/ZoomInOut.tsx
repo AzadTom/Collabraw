@@ -2,10 +2,9 @@ const ZoomInOut = ({groupScale,zoom}:{groupScale:number,zoom:(factor: number, ty
 
   return (
     <div
+     className="bottom-[80px] sm:bottom-4 left-4"
       style={{
         position: "absolute",
-        bottom: 20,
-        left: 20,
         background: "rgba(0,0,0,0.6)",
         color: "white",
         padding: "8px 12px",

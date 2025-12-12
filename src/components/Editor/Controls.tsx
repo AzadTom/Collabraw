@@ -1,4 +1,4 @@
-import { ImageDown, Image, MousePointer2, Square, Circle, Pencil, MoveRight } from 'lucide-react';
+import { ImageDown, Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download } from 'lucide-react';
 import React, { useState } from "react";
 import { ACTIONS } from "../../utils/constant";
 import { cn } from '@/lib/utils';
@@ -18,8 +18,8 @@ interface Props {
 const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
   const [showPicker, setShowPicker] = useState(false);
   return (
-    <div className="parent-container">
-      <ul className="controls-container bg-[var(--background)] p-2 rounded-xl shadow-md items-center">
+    <div className="parent-container w-full">
+      <ul className="controls-container bg-[var(--background)] p-2 sm:rounded-xl shadow-md items-center">
         <li className={action == ACTIONS.SELECT ? "active p-2" : ""} onClick={() => setAction(ACTIONS.SELECT)}>
           <MousePointer2 />
         </li>
@@ -35,7 +35,7 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, 
         <li className={action == ACTIONS.ARROW ? "active p-2" : ""} onClick={() => setAction(ACTIONS.ARROW)}>
           <MoveRight />
         </li>
-        <li className="relative">
+        <li className="relative hidden sm:block">
           <div
             className={cn(
               "w-8 h-8 rounded-md border shadow-sm cursor-pointer flex items-center justify-center transition-all",
@@ -57,8 +57,8 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, 
           <input id='image' type="file" style={{ display: "none" }} onChange={handleFileChange} accept='image/*' />
         </li>
 
-        <li onClick={handleExport} className="cursor-pointer">
-          <ImageDown />
+        <li onClick={handleExport} className="cursor-pointer mx-4">
+           <Download/>
         </li>
       </ul>
     </div>

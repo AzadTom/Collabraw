@@ -4,7 +4,7 @@ import { LogIn } from "lucide-react"
 
 const LoginButton = () => {
   return (
-    <div className="fixed bottom-4 sm:top-4 right-4 z-[999]">
+    <div className="fixed top-4 right-4 z-[999]">
       <div className="flex  gap-4 items-center">
         <ThemeToggle />
         <Button

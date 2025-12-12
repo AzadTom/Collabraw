@@ -78,8 +78,8 @@ export const useEditor = (
             id,
             x,
             y,
-            width: 20,
-            height: 20,
+            width: 0,
+            height: 0,
             fillcolor,
           },
         ]);
@@ -88,8 +88,8 @@ export const useEditor = (
           id,
           x,
           y,
-          width: 20,
-          height: 20,
+          width: 0,
+          height: 0,
           fillcolor,
         };
         socket.emit("rectangle", rect);
@@ -102,7 +102,7 @@ export const useEditor = (
             id,
             x,
             y,
-            radius: 20,
+            radius: 0,
             fillcolor,
           },
         ]);
