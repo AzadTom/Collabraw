@@ -1,4 +1,4 @@
-import { ImageDown, Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download } from 'lucide-react';
+import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download } from 'lucide-react';
 import React, { useState } from "react";
 import { ACTIONS } from "../../utils/constant";
 import { cn } from '@/lib/utils';
