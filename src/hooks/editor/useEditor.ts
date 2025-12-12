@@ -8,10 +8,11 @@ import {
 } from "@/types/PainTypes";
 import { ACTIONS } from "@/utils/constant";
 import { DefaultEventsMap } from "@socket.io/component-emitter";
-import { ColorLike } from "color";
 import Konva from "konva";
+import { Group } from "konva/lib/Group";
 import { KonvaEventObject } from "konva/lib/Node";
-import { useMemo, useRef, useState } from "react";
+import { Stage } from "konva/lib/Stage";
+import { Dispatch, SetStateAction, useMemo, useRef, useState } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -20,9 +21,10 @@ export const useEditor = (
   viewportWidth: number,
   viewportHeight: number
 ) => {
+
   const { isDark } = useTheme();
 
-  // Group Container
+  const stageRef = useRef<Konva.Stage>(null);
   const mainGroupRef = useRef<Konva.Group>(null);
   const [groupScale, setGroupScale] = useState<number>(1);
   const [groupStagePos, setGroupStagePos] = useState<{ x: number; y: number }>({
@@ -30,18 +32,12 @@ export const useEditor = (
     y: 0,
   });
 
-  const stageRef = useRef<Konva.Stage>(null);
-  const [stageScale, setStageScale] = useState<number>(1);
-  const [stagePos, setStagePos] = useState<{ x: number; y: number }>({
-    x: 0,
-    y: 0,
-  });
 
-  // controls
   const [action, setAction] = useState<string>(ACTIONS.SELECT);
   const [fillcolor, setFillColor] = useState<string>(
     isDark ? "#ffffff" : "#000000"
   );
+
   const currentShapeId = useRef<any>(null);
   const isPainting = useRef<boolean>(false);
   const transformRef = useRef<any>(null);
@@ -51,147 +47,28 @@ export const useEditor = (
   const [arrows, setArrows] = useState<ArrowType[]>([]);
   const [scribbles, setScribble] = useState<ScribbleType[]>([]);
 
-  // handleExport
-  const handleExport = () => {
-    if (!stageRef.current) return;
-    const uri = stageRef.current.toDataURL();
-    const link = document.createElement("a");
-    link.download = "image.png";
-    link.href = uri;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
 
-  // handle files
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const fileArray = Array.from(event.target.files);
+  const { zoom, handleWheel, handleExport, handleFileChange, onclick } = useOtherFunctionForEditor(viewportWidth, viewportHeight, mainGroupRef, setGroupScale, setGroupStagePos, stageRef, transformRef, setImages);
 
-      handleFilesChange(fileArray);
-    }
-  };
-
-  const handleFilesChange = (files: File[]) => {
-    const filesArray = files.map((file) => {
-      const url = URL.createObjectURL(file);
-
-      return { src: url, x: 0, y: 0 };
-    });
-    setImages((images) => [...images, ...filesArray]);
-  };
-  // end handle files
-
-  const onclick = (e: KonvaEventObject<MouseEvent>) => {
-    const target = e.currentTarget;
-    transformRef?.current?.nodes([target]);
-  };
-
-  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
-
-  e.evt.preventDefault();
-
-  const stage = stageRef.current;
-  const group = mainGroupRef.current;
-  if (!stage || !group) return;
-
-  const pointer = stage.getPointerPosition();
-  if (!pointer) return;
-
-  if (e.evt.ctrlKey || e.evt.metaKey) {
-    // ---- Zoom ----
-    const scaleBy = 1.05;
-    const oldScale = group.scaleX();
-
-    const mousePointTo = {
-      x: (pointer.x - group.x()) / oldScale,
-      y: (pointer.y - group.y()) / oldScale,
-    };
-
-    const direction = e.evt.deltaY > 0 ? -1 : 1;
-    let newScale =
-      direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
-
-    // clamp scale
-    const MIN = 0.1;
-    const MAX = 1;
-
-    const clampedScale = Math.max(MIN, Math.min(MAX, newScale));
-
-    // if scale didn't change, don't adjust position (fixes jitter)
-    if (clampedScale === oldScale) return;
-
-    setGroupScale(clampedScale);
-
-    // adjust position to keep zoom centered
-    setGroupStagePos({
-      x: pointer.x - mousePointTo.x * clampedScale,
-      y: pointer.y - mousePointTo.y * clampedScale,
-    });
-
-  } else {
-    // ---- Pan ----
-    setGroupStagePos((prev) => ({
-      x: prev.x - e.evt.deltaX,
-      y: prev.y - e.evt.deltaY,
-    }));
-  }
-};
-
-
-  const zoom = (factor: number, type: String) => {
-    const groupRef = mainGroupRef.current;
-    if (!groupRef) return;
-
-    const oldScale = groupRef.scaleX();
-    let newScale = oldScale;
-    if (type === "plus") {
-      const value = oldScale + factor;
-      if (value <= 1) {
-        newScale = value;
-      }
-    }
-
-    if (type === "minus") {
-      const value = oldScale - factor;
-      if (value >= 0.1) {
-        newScale = oldScale - factor;
-      }
-    }
-
-    setGroupScale(newScale);
-
-    const center = { x: viewportWidth / 2, y: viewportHeight / 2 };
-    const mousePointTo = {
-      x: (center.x - groupRef.x()) / oldScale,
-      y: (center.y - groupRef.y()) / oldScale,
-    };
-
-    setGroupStagePos({
-      x: center.x - mousePointTo.x * newScale,
-      y: center.y - mousePointTo.y * newScale,
-    });
-  };
-
-  // onpointerEvent
 
   const onpointerdown = () => {
+
     if (action === ACTIONS.SELECT) return;
 
-  const stage = stageRef.current;
-  const group = mainGroupRef.current;
-  if (!stage || !group) return;
+    const stage = stageRef.current;
+    const group = mainGroupRef.current;
+    if (!stage || !group) return;
 
-  const pointer = stage.getPointerPosition();
-  if(!pointer) return;
-  const scale = group.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const scale = group.scaleX();
 
-  const x = (pointer.x - group.x()) / scale;
-  const y = (pointer.y - group.y()) / scale;
+    const x = (pointer.x - group.x()) / scale;
+    const y = (pointer.y - group.y()) / scale;
 
-  const id = uuid();
-  currentShapeId.current = id;
-  isPainting.current = true;
+    const id = uuid();
+    currentShapeId.current = id;
+    isPainting.current = true;
 
     switch (action) {
       case ACTIONS.RECTANGLE:
@@ -264,16 +141,16 @@ export const useEditor = (
   const onpointermove = () => {
     if (action === ACTIONS.SELECT || !isPainting.current) return;
 
-  const stage = stageRef.current;
-  const group = mainGroupRef.current;
-  if (!stage || !group) return;
+    const stage = stageRef.current;
+    const group = mainGroupRef.current;
+    if (!stage || !group) return;
 
-  const pointer = stage.getPointerPosition();
-  if(!pointer) return;
-  const scale = group.scaleX();
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+    const scale = group.scaleX();
 
-  const x = (pointer.x - group.x()) / scale;
-  const y = (pointer.y - group.y()) / scale;
+    const x = (pointer.x - group.x()) / scale;
+    const y = (pointer.y - group.y()) / scale;
 
     switch (action) {
       case ACTIONS.RECTANGLE:
@@ -395,9 +272,7 @@ export const useEditor = (
   return {
     mainGroupRef,
     stageRef,
-    stagePos,
     groupStagePos,
-    stageScale,
     groupScale,
     action,
     setAction,
@@ -427,6 +302,142 @@ export const useEditor = (
     pointerProps,
   };
 };
+
+const useOtherFunctionForEditor = (viewportWidth: number, viewportHeight: number, mainGroupRef: React.RefObject<Group>, setGroupScale: Dispatch<SetStateAction<number>>, setGroupStagePos: Dispatch<SetStateAction<{
+  x: number;
+  y: number;
+}>>, stageRef: React.RefObject<Stage>, transformRef: React.MutableRefObject<any>, setImages: Dispatch<SetStateAction<ImageType[]>>) => {
+
+
+  const onclick = (e: KonvaEventObject<MouseEvent>) => {
+    const target = e.currentTarget;
+    transformRef?.current?.nodes([target]);
+  };
+
+  const handleExport = () => {
+    if (!stageRef.current) return;
+    const uri = stageRef.current.toDataURL();
+    const link = document.createElement("a");
+    link.download = "image.png";
+    link.href = uri;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const fileArray = Array.from(event.target.files);
+
+      handleFilesChange(fileArray);
+    }
+  };
+
+  const handleFilesChange = (files: File[]) => {
+    const filesArray = files.map((file) => {
+      const url = URL.createObjectURL(file);
+
+      return { src: url, x: 0, y: 0 };
+    });
+    setImages((images) => [...images, ...filesArray]);
+  };
+
+
+  const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
+
+    e.evt.preventDefault();
+
+    const stage = stageRef.current;
+    const group = mainGroupRef.current;
+    if (!stage || !group) return;
+
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    if (e.evt.ctrlKey || e.evt.metaKey) {
+      // ---- Zoom ----
+      const scaleBy = 1.05;
+      const oldScale = group.scaleX();
+
+      const mousePointTo = {
+        x: (pointer.x - group.x()) / oldScale,
+        y: (pointer.y - group.y()) / oldScale,
+      };
+
+      const direction = e.evt.deltaY > 0 ? -1 : 1;
+      let newScale =
+        direction > 0 ? oldScale * scaleBy : oldScale / scaleBy;
+
+      // clamp scale
+      const MIN = 0.1;
+      const MAX = 1;
+
+      const clampedScale = Math.max(MIN, Math.min(MAX, newScale));
+
+      // if scale didn't change, don't adjust position (fixes jitter)
+      if (clampedScale === oldScale) return;
+
+      setGroupScale(clampedScale);
+
+      // adjust position to keep zoom centered
+      setGroupStagePos({
+        x: pointer.x - mousePointTo.x * clampedScale,
+        y: pointer.y - mousePointTo.y * clampedScale,
+      });
+
+    } else {
+      // ---- Pan ----
+      setGroupStagePos((prev) => ({
+        x: prev.x - e.evt.deltaX,
+        y: prev.y - e.evt.deltaY,
+      }));
+    }
+  };
+
+
+
+  const zoom = (factor: number, type: String) => {
+    const groupRef = mainGroupRef.current;
+    if (!groupRef) return;
+
+    const oldScale = groupRef.scaleX();
+    let newScale = oldScale;
+    if (type === "plus") {
+      const value = oldScale + factor;
+      if (value <= 1) {
+        newScale = value;
+      }
+    }
+
+    if (type === "minus") {
+      const value = oldScale - factor;
+      if (value >= 0.1) {
+        newScale = oldScale - factor;
+      }
+    }
+
+    setGroupScale(newScale);
+
+    const center = { x: viewportWidth / 2, y: viewportHeight / 2 };
+    const mousePointTo = {
+      x: (center.x - groupRef.x()) / oldScale,
+      y: (center.y - groupRef.y()) / oldScale,
+    };
+
+    setGroupStagePos({
+      x: center.x - mousePointTo.x * newScale,
+      y: center.y - mousePointTo.y * newScale,
+    });
+  };
+
+  return {
+    zoom,
+    handleWheel,
+    handleExport,
+    onclick,
+    handleFileChange,
+  }
+}
 
 export const useGridPattern = (gridSize: number, stroke = "#333") => {
   return useMemo(() => {

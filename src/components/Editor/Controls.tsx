@@ -15,7 +15,7 @@ interface Props {
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const Controls: React.FC<Props> = ({isDark, handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
+const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
   const [showPicker, setShowPicker] = useState(false);
   return (
     <div className="parent-container">
@@ -66,27 +66,3 @@ const Controls: React.FC<Props> = ({isDark, handleExport, action, setAction, fil
 }
 
 export default Controls;
-
-
-
-export const ZoomInOut = ({ handleZoomIn, handleZoomOut, zoom }: { handleZoomOut: () => void, handleZoomIn: () => void, zoom: number }) => {
-
-  return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-[var(--background)] shadow-md rounded-full px-4 py-2 text-sm" >
-      <button
-        onClick={handleZoomOut}
-        className="px-2 py-1 rounded bg-[var(--background)]"
-      >
-        -
-      </button>
-      <span className="w-16 text-center">{Math.round(zoom * 100)}%</span>
-      <button
-        onClick={handleZoomIn}
-        className="px-2 py-1 rounded bg-[var(--background)]"
-      >
-        +
-      </button>
-    </div>
-  )
-
-}

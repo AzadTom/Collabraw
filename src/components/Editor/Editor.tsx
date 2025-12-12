@@ -10,7 +10,6 @@ import {
   Transformer,
 } from "react-konva";
 import Controls from "./Controls";
-import { ACTIONS } from "../../utils/constant";
 import URLImage from "./URLImage";
 import {
   ArrowType,
@@ -22,6 +21,7 @@ import { io } from "socket.io-client";
 import { useEditor, useGridPattern } from "@/hooks/editor/useEditor";
 import { useWindowSize } from "@/hooks/utility/utility";
 import { cn } from "@/lib/utils";
+import ZoomInOut from "./ZoomInOut";
 
 const socket = io("https://white-board-backend-socket.vercel.app/");
 
@@ -31,13 +31,10 @@ function Editor() {
   const {
     mainGroupRef,
     stageRef,
-    stagePos,
-    groupStagePos,
-    stageScale,
     groupScale,
     handleWheel,
+    groupStagePos,
     zoom,
-    action,
     fillcolor,
     images,
     transformRef,
@@ -102,7 +99,7 @@ function Editor() {
   return (
     <section className="relative">
       <Controls {...controlProps} />
-      <Stage 
+      <Stage
         ref={stageRef}
         width={viewportWidth}
         height={viewportHeight}
@@ -112,7 +109,6 @@ function Editor() {
         onPointerUp={onpointerup}
         className={cn(isDark ? "bg-[#1e1e1e]" : "bg-[#f7f7f7]", "p-12")}
       >
-        {/* Infinite Grid Background */}
         <Layer>
           <Group
             ref={mainGroupRef}
@@ -182,35 +178,7 @@ function Editor() {
           </Group>
         </Layer>
       </Stage>
-      {/* Zoom controls */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 20,
-          left: 20,
-          background: "rgba(0,0,0,0.6)",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "8px",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        }}
-      >
-        <button
-          onClick={() => zoom(0.1, "plus")}
-          style={{ padding: "4px 8px", borderRadius: "4px" }}
-        >
-          ➕
-        </button>
-        <span>{Math.round(groupScale * 100)}%</span>
-        <button
-          onClick={() => zoom(0.1, "minus")}
-          style={{ padding: "4px 8px", borderRadius: "4px" }}
-        >
-          ➖
-        </button>
-      </div>
+      <ZoomInOut groupScale={groupScale} zoom={zoom} />
     </section>
   );
 }
