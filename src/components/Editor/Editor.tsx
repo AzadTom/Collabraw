@@ -140,7 +140,7 @@ function Editor() {
                 key={rec.id}
                 x={rec.x}
                 y={rec.y}
-                fill={rec.fillcolor}
+                fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 width={rec.width}
                 height={rec.height}
                 draggable
@@ -153,7 +153,7 @@ function Editor() {
                 x={cir.x}
                 y={cir.y}
                 radius={cir.radius}
-                fill={cir.fillcolor}
+                fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 draggable
                 onClick={onclick}
               />
@@ -162,9 +162,9 @@ function Editor() {
               <Arrow
                 key={arrow.id}
                 points={arrow.points}
-                stroke={fillcolor}
+                stroke={isDark ? "#f7f7f7" : "#1e1e1e"}
                 strokeWidth={2}
-                fill={arrow.fillcolor}
+                fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 draggable
                 onClick={onclick}
               />
@@ -173,13 +173,14 @@ function Editor() {
               <Line
                 key={scribble.id}
                 points={scribble.points}
-                stroke={fillcolor}
+                stroke={isDark ? "#f7f7f7" : "#1e1e1e"} 
                 strokeWidth={2}
                 tension={0.5}
                 lineCap="round"
                 lineJoin="round"
                 draggable
               />
+
             ))}
             {images.map((image, index) => (
               <URLImage key={index} image={image} onclick={onclick} />
