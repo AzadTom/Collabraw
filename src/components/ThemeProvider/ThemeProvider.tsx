@@ -35,7 +35,18 @@ const ThemeProvider = ({ children }: { children: ReactNode }) => {
             document.documentElement.classList.remove('dark-theme');
             localStorage.setItem('theme', 'light');
         }
+
     }, [isDark]);
+
+    useEffect(() => {
+        const hasReloaded = sessionStorage.getItem("theme-reloaded");
+
+        if (!hasReloaded) {
+            sessionStorage.setItem("theme-reloaded", "true");
+            window.location.reload();
+        }
+    }, []);
+
 
 
     const toggleTheme = (): void => {
