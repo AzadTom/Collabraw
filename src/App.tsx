@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import './App.css'
 import HamBurgerButton from './components/Button/HamBurgerMenu'
 import LoginButton from './components/Button/LoginButton'
@@ -6,6 +7,9 @@ import WhiteBoard from './pages/WhiteBoard'
 
 
 function App() {
+  useEffect(()=>{
+    window.location.reload();
+  },[])
 
   return (
     <main>
