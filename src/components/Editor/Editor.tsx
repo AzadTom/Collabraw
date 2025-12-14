@@ -109,7 +109,7 @@ function Editor() {
         width={viewportWidth}
         height={viewportHeight}
         onWheel={handleWheel}
-        onTouchStart={handleTouchStart}       // mobile pan / zoom
+        onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onPointerDown={onpointerdown}
