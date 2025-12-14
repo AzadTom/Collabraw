@@ -1,8 +1,6 @@
 import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download } from 'lucide-react';
-import React, { useState } from "react";
+import React from "react";
 import { ACTIONS } from "../../utils/constant";
-import { cn } from '@/lib/utils';
-import ColorPicker from 'react-pick-color';
 
 
 interface Props {
@@ -15,8 +13,7 @@ interface Props {
   handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
-const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, setFillColor, handleFileChange }) => {
-  const [showPicker, setShowPicker] = useState(false);
+const Controls: React.FC<Props> = ({handleExport, action, setAction,handleFileChange }) => {
   return (
     <div className="parent-container w-full">
       <ul className="controls-container bg-[var(--background)] p-2 sm:rounded-xl shadow-md items-center">

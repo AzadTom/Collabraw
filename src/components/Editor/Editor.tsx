@@ -38,7 +38,6 @@ function Editor() {
     handleWheel,
     groupStagePos,
     zoom,
-    fillcolor,
     images,
     transformRef,
     onclick,
