@@ -35,7 +35,7 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, 
         <li className={action == ACTIONS.ARROW ? "active p-2" : ""} onClick={() => setAction(ACTIONS.ARROW)}>
           <MoveRight />
         </li>
-        <li className="relative hidden sm:block">
+        {/* <li className="relative hidden sm:block">
           <div
             className={cn(
               "w-8 h-8 rounded-md border shadow-sm cursor-pointer flex items-center justify-center transition-all",
@@ -49,7 +49,7 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction, fillcolor, 
               <ColorPicker  color={fillcolor} onChange={color =>setFillColor(color.hex)}/>
             </div>
           )}
-        </li>
+        </li> */}
         <li>
           <label htmlFor="image" className="cursor-pointer">
             <Image />

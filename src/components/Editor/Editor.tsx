@@ -29,6 +29,9 @@ function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
   const gridPattern = useGridPattern(50);
   const {
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
     mainGroupRef,
     stageRef,
     groupScale,
@@ -97,16 +100,23 @@ function Editor() {
   ]);
 
   return (
-    <section className="relative">
+    <section className="relative" style={{
+      touchAction: "none",
+      overscrollBehavior: "none",
+    }}>
       <Controls {...controlProps} />
       <Stage
         ref={stageRef}
         width={viewportWidth}
         height={viewportHeight}
         onWheel={handleWheel}
+        onTouchStart={handleTouchStart}       // mobile pan / zoom
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
         onPointerDown={onpointerdown}
         onPointerMove={onpointermove}
         onPointerUp={onpointerup}
+        onPointerCancel={onpointerup}
         className={cn(isDark ? "bg-[#1e1e1e]" : "bg-[#f7f7f7]", "p-12")}
       >
         <Layer>
