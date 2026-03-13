@@ -12,7 +12,16 @@ import Konva from "konva";
 import { Group } from "konva/lib/Group";
 import { KonvaEventObject } from "konva/lib/Node";
 import { Stage } from "konva/lib/Stage";
-import { Dispatch, SetStateAction, useMemo, useRef, useState } from "react";
+import {
+  Dispatch,
+  MutableRefObject,
+  RefObject,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 
@@ -38,6 +47,7 @@ export const useEditor = (
     isDark ? "#ffffff" : "#000000"
   );
 
+  const cursor = action === ACTIONS.TEXT ? 'crosshair' : 'default';
   const currentShapeId = useRef<any>(null);
   const isPainting = useRef<boolean>(false);
   const transformRef = useRef<any>(null);
@@ -55,7 +65,23 @@ export const useEditor = (
 
 
 
-  const { zoom, handleWheel, handleExport, handleFileChange, onclick } = useOtherFunctionForEditor(viewportWidth, viewportHeight, mainGroupRef, setGroupScale, setGroupStagePos, stageRef, transformRef, setImages);
+  const {
+    zoom,
+    handleWheel,
+    handleExport,
+    handleFileChange,
+    onclick,
+    resetZoom,
+  } = useOtherFunctionForEditor(
+    viewportWidth,
+    viewportHeight,
+    mainGroupRef,
+    setGroupScale,
+    setGroupStagePos,
+    stageRef,
+    transformRef,
+    setImages
+  );
 
 const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
   e.evt.preventDefault();
@@ -386,6 +412,53 @@ const handleTouchEnd = () => {
     onpointermove,
   };
 
+  // Keyboard shortcuts for tools and zoom reset
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      const isInputLike =
+        tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable;
+
+      if (isInputLike) return;
+
+      // Tool switching
+      switch (e.key) {
+        case "v":
+        case "V":
+          setAction(ACTIONS.SELECT);
+          break;
+        case "r":
+        case "R":
+          setAction(ACTIONS.RECTANGLE);
+          break;
+        case "c":
+        case "C":
+          setAction(ACTIONS.CIRCLE);
+          break;
+        case "p":
+        case "P":
+          setAction(ACTIONS.SCRIBBLE);
+          break;
+        case "a":
+        case "A":
+          setAction(ACTIONS.ARROW);
+          break;
+        default:
+          break;
+      }
+
+      // Reset zoom with Ctrl/Cmd + 0
+      if ((e.ctrlKey || e.metaKey) && e.key === "0") {
+        e.preventDefault();
+        resetZoom();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setAction, resetZoom]);
+
   const shapeControls = {
     arrows,
     setArrows,
@@ -431,13 +504,25 @@ const handleTouchEnd = () => {
     zoom,
     handleWheel,
     pointerProps,
+    cursor,
   };
 };
 
-const useOtherFunctionForEditor = (viewportWidth: number, viewportHeight: number, mainGroupRef: React.RefObject<Group>, setGroupScale: Dispatch<SetStateAction<number>>, setGroupStagePos: Dispatch<SetStateAction<{
-  x: number;
-  y: number;
-}>>, stageRef: React.RefObject<Stage>, transformRef: React.MutableRefObject<any>, setImages: Dispatch<SetStateAction<ImageType[]>>) => {
+const useOtherFunctionForEditor = (
+  viewportWidth: number,
+  viewportHeight: number,
+  mainGroupRef: RefObject<Group>,
+  setGroupScale: Dispatch<SetStateAction<number>>,
+  setGroupStagePos: Dispatch<
+    SetStateAction<{
+      x: number;
+      y: number;
+    }>
+  >,
+  stageRef: RefObject<Stage>,
+  transformRef: MutableRefObject<any>,
+  setImages: Dispatch<SetStateAction<ImageType[]>>
+) => {
 
 
   const onclick = (e: KonvaEventObject<MouseEvent>) => {
@@ -561,13 +646,25 @@ const useOtherFunctionForEditor = (viewportWidth: number, viewportHeight: number
     });
   };
 
+  const resetZoom = () => {
+    const groupRef = mainGroupRef.current;
+    if (!groupRef) return;
+
+    setGroupScale(1);
+    setGroupStagePos({
+      x: 0,
+      y: 0,
+    });
+  };
+
   return {
     zoom,
     handleWheel,
     handleExport,
     onclick,
     handleFileChange,
-  }
+    resetZoom,
+  };
 }
 
 export const useGridPattern = (gridSize: number, stroke = "#333") => {

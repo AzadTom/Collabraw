@@ -1,4 +1,4 @@
-import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download } from 'lucide-react';
+import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download, Text } from 'lucide-react';
 import React from "react";
 import { ACTIONS } from "../../utils/constant";
 
@@ -31,6 +31,9 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction,handleFileCh
         </li>
         <li className={action == ACTIONS.ARROW ? "active p-2" : ""} onClick={() => setAction(ACTIONS.ARROW)}>
           <MoveRight />
+        </li>
+        <li className={action == ACTIONS.TEXT ? "active p-2" : ""} onClick={()=> setAction(ACTIONS.TEXT)}>
+          <Text/>
         </li>
         {/* <li className="relative hidden sm:block">
           <div

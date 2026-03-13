@@ -45,6 +45,7 @@ function Editor() {
     controlProps,
     isDark,
     pointerProps,
+    cursor,
   } = useEditor(socket, viewportWidth, viewportHeight);
 
   const {
@@ -116,6 +117,7 @@ function Editor() {
         onPointerMove={onpointermove}
         onPointerUp={onpointerup}
         onPointerCancel={onpointerup}
+        style={{cursor}}
         className={cn(isDark ? "bg-[#1e1e1e]" : "bg-[#f7f7f7]", "p-12")}
       >
         <Layer>
