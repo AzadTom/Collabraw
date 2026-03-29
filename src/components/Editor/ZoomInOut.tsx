@@ -1,13 +1,14 @@
+import { Minus, Plus } from "lucide-react";
+
 const ZoomInOut = ({groupScale,zoom}:{groupScale:number,zoom:(factor: number, type: String) => void}) => {
 
   return (
     <div
-     className="bottom-[80px] sm:bottom-4 left-4"
+     className="bottom-4 left-4 border border-[#363636] bg-[#262626]"
       style={{
         position: "absolute",
-        background: "rgba(0,0,0,0.6)",
         color: "white",
-        padding: "8px 12px",
+        padding: "8px 4px",
         borderRadius: "8px",
         display: "flex",
         alignItems: "center",
@@ -18,14 +19,14 @@ const ZoomInOut = ({groupScale,zoom}:{groupScale:number,zoom:(factor: number, ty
         onClick={() => zoom(0.1, "plus")}
         style={{ padding: "4px 8px", borderRadius: "4px" }}
       >
-        ➕
+        <Plus/>
       </button>
       <span>{Math.round(groupScale * 100)}%</span>
       <button
         onClick={() => zoom(0.1, "minus")}
         style={{ padding: "4px 8px", borderRadius: "4px" }}
       >
-        ➖
+        <Minus/>
       </button>
     </div>
   )

@@ -1,9 +1,9 @@
 import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download, Text, Undo2, Redo2 } from 'lucide-react';
 import React from "react";
 import { ACTIONS } from "../../utils/constant";
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 
-
-interface Props {
+export interface Props {
   isDark:boolean,
   handleExport: () => void,
   action: string,
@@ -19,59 +19,68 @@ interface Props {
 
 const Controls: React.FC<Props> = ({handleExport, action, setAction, handleFileChange, handleUndo, handleRedo, canUndo, canRedo }) => {
   return (
-    <div className="parent-container w-full">
-      <ul className="controls-container bg-[var(--background)] p-2 sm:rounded-xl shadow-md items-center">
-        <li className={action == ACTIONS.SELECT ? "active p-2" : ""} onClick={() => setAction(ACTIONS.SELECT)}>
-          <MousePointer2 />
-        </li>
-        <li className={action == ACTIONS.RECTANGLE ? "active p-2" : ""} onClick={() => setAction(ACTIONS.RECTANGLE)}>
-          <Square />
-        </li>
-        <li className={action == ACTIONS.CIRCLE ? "active p-2" : ""} onClick={() => setAction(ACTIONS.CIRCLE)}>
-          <Circle />
-        </li>
-        <li className={action == ACTIONS.SCRIBBLE ? "active p-2" : ""} onClick={() => setAction(ACTIONS.SCRIBBLE)}>
-          <Pencil />
-        </li>
-        <li className={action == ACTIONS.ARROW ? "active p-2" : ""} onClick={() => setAction(ACTIONS.ARROW)}>
-          <MoveRight />
-        </li>
-        <li className={action == ACTIONS.TEXT ? "active p-2" : ""} onClick={()=> setAction(ACTIONS.TEXT)}>
-          <Text/>
-        </li>
-        <li className={`p-2 cursor-pointer ${!canUndo ? 'opacity-50' : 'hover:scale-110'}`} onClick={canUndo ? handleUndo : undefined}>
-          <Undo2 />
-        </li>
-        <li className={`p-2 cursor-pointer ${!canRedo ? 'opacity-50' : 'hover:scale-110'}`} onClick={canRedo ? handleRedo : undefined}>
-          <Redo2 />
-        </li>
-        {/* <li className="relative hidden sm:block">
-          <div
-            className={cn(
-              "w-8 h-8 rounded-md border shadow-sm cursor-pointer flex items-center justify-center transition-all",
-              "hover:scale-110 hover:shadow-md"
-            )}
-            style={{ backgroundColor: fillcolor }}
-            onClick={() => setShowPicker(!showPicker)}
-          />
-          {showPicker && (
-            <div className="absolute top-10 left-0 z-50  p-3 rounded-xl shadow-lg flex flex-col gap-2">
-              <ColorPicker  color={fillcolor} onChange={color =>setFillColor(color.hex)}/>
-            </div>
-          )}
-        </li> */}
-        <li>
-          <label htmlFor="image" className="cursor-pointer">
-            <Image />
-          </label>
-          <input id='image' type="file" multiple style={{ display: "none" }} onChange={handleFileChange} accept='image/*' />
-        </li>
+    <SidebarMenu className="gap-2 cursor-pointer">
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.SELECT} onClick={() => setAction(ACTIONS.SELECT)}>
+          <MousePointer2 /> Select
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.RECTANGLE} onClick={() => setAction(ACTIONS.RECTANGLE)}>
+          <Square /> Rectangle
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.CIRCLE} onClick={() => setAction(ACTIONS.CIRCLE)}>
+          <Circle /> Circle
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.SCRIBBLE} onClick={() => setAction(ACTIONS.SCRIBBLE)}>
+          <Pencil /> Draw
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.ARROW} onClick={() => setAction(ACTIONS.ARROW)}>
+          <MoveRight /> Arrow
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton isActive={action === ACTIONS.TEXT} onClick={() => setAction(ACTIONS.TEXT)}>
+          <Text /> Text
+        </SidebarMenuButton>
+      </SidebarMenuItem>
 
-        <li onClick={handleExport} className="cursor-pointer mx-4">
-           <Download/>
-        </li>
-      </ul>
-    </div>
+      <div className="my-4 border-t w-full opacity-50" />
+
+      <SidebarMenuItem>
+        <SidebarMenuButton asChild>
+          <label htmlFor="image" className="cursor-pointer">
+            <Image /> Import Image
+          </label>
+        </SidebarMenuButton>
+        <input id="image" type="file" multiple style={{ display: "none" }} onChange={handleFileChange} accept="image/*" />
+      </SidebarMenuItem>
+
+      <SidebarMenuItem>
+        <SidebarMenuButton disabled={!canUndo} onClick={canUndo ? handleUndo : undefined}>
+          <Undo2 /> Undo
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+      <SidebarMenuItem>
+        <SidebarMenuButton disabled={!canRedo} onClick={canRedo ? handleRedo : undefined}>
+          <Redo2 /> Redo
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+
+      <div className="my-4 border-t w-full opacity-50" />
+
+      <SidebarMenuItem>
+        <SidebarMenuButton onClick={handleExport}>
+          <Download /> Export Canvas
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    </SidebarMenu>
   )
 }
 

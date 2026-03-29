@@ -4,16 +4,17 @@ import { LogIn } from "lucide-react"
 
 const LoginButton = () => {
   return (
-    <div className="fixed top-4 right-4 z-[999]">
-      <div className="flex  gap-4 items-center">
-        <ThemeToggle />
-        <Button
-          style={{ padding: '8px 20px' }}
-          className="cursor-pointer  h-12 text-xl flex items-center gap-2 bg-[var(--background)] hover:bg-[var(--background)]  text-blackborder border-[var(--background)] px-6 py-3 rounded-md shadow-sm transition-all duration-200"
-        >
-          <LogIn style={{ width: '18px', height: '18px' }} />
-        </Button>
+    <div className="flex flex-col gap-4 items-center w-full">
+      <div className="flex w-full items-center justify-between">
+         <span className="text-sm font-medium">Appearance</span>
+         <ThemeToggle />
       </div>
+      <Button
+        className="w-full flex items-center justify-center gap-2"
+      >
+        <LogIn className="w-4 h-4" />
+        Log In
+      </Button>
     </div>
   )
 }
