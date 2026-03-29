@@ -39,7 +39,6 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction, handleFileC
         <li className={action == ACTIONS.TEXT ? "active p-2" : ""} onClick={()=> setAction(ACTIONS.TEXT)}>
           <Text/>
         </li>
-        <li style={{width: '1px', height: '20px', backgroundColor: 'gray', margin: '0 8px'}} />
         <li className={`p-2 cursor-pointer ${!canUndo ? 'opacity-50' : 'hover:scale-110'}`} onClick={canUndo ? handleUndo : undefined}>
           <Undo2 />
         </li>
