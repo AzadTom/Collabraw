@@ -11,6 +11,7 @@ import {
 } from "react-konva";
 import Controls from "./Controls";
 import URLImage from "./URLImage";
+import TextNode from "./TextNode";
 import {
   ArrowType,
   RectangleType,
@@ -22,6 +23,7 @@ import { useEditor, useGridPattern } from "@/hooks/editor/useEditor";
 import { useWindowSize } from "@/hooks/utility/utility";
 import { cn } from "@/lib/utils";
 import ZoomInOut from "./ZoomInOut";
+import { KonvaEventObject } from "konva/lib/Node";
 
 const socket = io("https://white-board-backend-socket.vercel.app/");
 
@@ -46,6 +48,12 @@ function Editor() {
     isDark,
     pointerProps,
     cursor,
+    textList,
+    updateText,
+    removeText,
+    editingTextId,
+    setEditingTextId,
+    setTextList,
   } = useEditor(socket, viewportWidth, viewportHeight);
 
   const {
@@ -88,16 +96,41 @@ function Editor() {
         setScribble((prev) => [...prev, scribble]);
       }
     });
+
+    socket.on("ontext", (textItem) => {
+      setTextList((prev) => {
+        const index = prev.findIndex((t) => t.id === textItem.id);
+        if (index > -1) {
+          const newTexts = [...prev];
+          newTexts[index] = textItem;
+          return newTexts;
+        }
+        return [...prev, textItem];
+      });
+    });
   }, [
     rectangles,
     circles,
     arrows,
     scribbles,
+    textList,
     setRectangles,
     setCircles,
     setArrows,
     setScribble,
+    setTextList,
   ]);
+
+  const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
+    const clickedOnEmpty =
+      e.target === e.target.getStage() ||
+      e.target.id() === "bg";
+
+    if (clickedOnEmpty) {
+      transformRef.current?.nodes([]);
+      onpointerdown();
+    }
+  };
 
   return (
     <section className="relative" style={{
@@ -113,11 +146,11 @@ function Editor() {
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
-        onPointerDown={onpointerdown}
+        onPointerDown={onStagePointerDown}
         onPointerMove={onpointermove}
         onPointerUp={onpointerup}
         onPointerCancel={onpointerup}
-        style={{cursor}}
+        style={{ cursor }}
         className={cn(isDark ? "bg-[#1e1e1e]" : "bg-[#f7f7f7]", "p-12")}
       >
         <Layer>
@@ -129,6 +162,7 @@ function Editor() {
             y={groupStagePos.y}
           >
             <Rect
+              id="bg"
               x={-100000}
               y={-100000}
               width={200000}
@@ -174,7 +208,7 @@ function Editor() {
               <Line
                 key={scribble.id}
                 points={scribble.points}
-                stroke={isDark ? "#f7f7f7" : "#1e1e1e"} 
+                stroke={isDark ? "#f7f7f7" : "#1e1e1e"}
                 strokeWidth={2}
                 tension={0.5}
                 lineCap="round"
@@ -185,6 +219,36 @@ function Editor() {
             ))}
             {images.map((image, index) => (
               <URLImage key={index} image={image} onclick={onclick} />
+            ))}
+            {textList.map((textItem) => (
+              <TextNode
+                key={textItem.id}
+                shape={textItem}
+                isEditing={editingTextId === textItem.id}
+                onEditStart={() => {
+                  setEditingTextId(textItem.id);
+                  transformRef.current?.nodes([]);
+                }}
+                onChange={(newText) => {
+                  updateText(textItem.id, { text: newText });
+                  socket.emit("text", { ...textItem, text: newText });
+                }}
+                onPositionChange={(x, y) => {
+                  updateText(textItem.id, { x, y });
+                  socket.emit("text", { ...textItem, x, y });
+                }}
+                onBlur={() => {
+                  setEditingTextId(null);
+                  if (!textItem.text.trim()) {
+                    removeText(textItem.id);
+                  }
+                }}
+                onSelect={onclick}
+                onTransformEnd={(newProps: any) => {
+                  updateText(textItem.id, newProps);
+                  socket.emit("text", { ...textItem, ...newProps });
+                }}
+              />
             ))}
             <Transformer ref={transformRef} />
           </Group>

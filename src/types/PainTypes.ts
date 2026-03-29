@@ -5,6 +5,20 @@ export interface ArrowType {
     fillcolor: string
   }
 
+
+
+  export interface CanvasText {
+    id: string;
+    text: string;        
+    x: number;           
+    y: number;
+    fontSize: number;    
+    fontFamily?: string; 
+    fill?: string;
+    draggable?: boolean;
+    width?: number;
+  }
+
   export interface ScribbleType {
 
     id: string,

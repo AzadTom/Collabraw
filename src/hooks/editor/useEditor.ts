@@ -24,6 +24,7 @@ import {
 } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
+import { useText } from "./useText";
 
 export const useEditor = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
@@ -51,6 +52,10 @@ export const useEditor = (
   const currentShapeId = useRef<any>(null);
   const isPainting = useRef<boolean>(false);
   const transformRef = useRef<any>(null);
+
+  const { textList, addText, removeText, updateText, editingTextId, setEditingTextId, setTextList } = useText();
+
+
   const [images, setImages] = useState<ImageType[]>([]);
   const [rectangles, setRectangles] = useState<RectangleType[]>([]);
   const [circles, setCircles] = useState<CircleType[]>([]);
@@ -72,6 +77,7 @@ export const useEditor = (
     handleFileChange,
     onclick,
     resetZoom,
+    handleStageMouseDown,
   } = useOtherFunctionForEditor(
     viewportWidth,
     viewportHeight,
@@ -83,123 +89,123 @@ export const useEditor = (
     setImages
   );
 
-const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
-  e.evt.preventDefault();
+  const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
 
-  const stage = stageRef.current;
-  if (!stage) return;
+    const stage = stageRef.current;
+    if (!stage) return;
 
-  stage.setPointersPositions(e.evt);
+    stage.setPointersPositions(e.evt);
 
-  if (e.evt.touches.length === 1) {
-    // ONE finger → possible pan
-    const t = e.evt.touches[0];
-    lastTouchPos.current = { x: t.clientX, y: t.clientY };
-  }
-
-  if (e.evt.touches.length === 2) {
-    // TWO fingers → zoom
-    const [t1, t2] = e.evt.touches;
-    const dx = t1.clientX - t2.clientX;
-    const dy = t1.clientY - t2.clientY;
-
-    lastTouchDist.current = Math.hypot(dx, dy);
-    lastTouchCenter.current = {
-      x: (t1.clientX + t2.clientX) / 2,
-      y: (t1.clientY + t2.clientY) / 2,
-    };
-  }
-};
-
-
-
-
- const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
-  e.evt.preventDefault();
-
-  const stage = stageRef.current;
-  const group = mainGroupRef.current;
-  if (!stage || !group) return;
-
-  stage.setPointersPositions(e.evt);
-
-  /* ======================
-     ONE FINGER → PAN
-     (only in SELECT mode)
-  ====================== */
-
-  if (e.evt.touches.length === 1 && action === ACTIONS.SELECT) {
-    const t = e.evt.touches[0];
-
-    if (!lastTouchPos.current) {
+    if (e.evt.touches.length === 1) {
+      // ONE finger → possible pan
+      const t = e.evt.touches[0];
       lastTouchPos.current = { x: t.clientX, y: t.clientY };
-      return;
     }
 
-    const dx = t.clientX - lastTouchPos.current.x;
-    const dy = t.clientY - lastTouchPos.current.y;
+    if (e.evt.touches.length === 2) {
+      // TWO fingers → zoom
+      const [t1, t2] = e.evt.touches;
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
 
-    setGroupStagePos((prev) => ({
-      x: prev.x + dx,
-      y: prev.y + dy,
-    }));
+      lastTouchDist.current = Math.hypot(dx, dy);
+      lastTouchCenter.current = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2,
+      };
+    }
+  };
 
-    lastTouchPos.current = { x: t.clientX, y: t.clientY };
-  }
 
-  /* ======================
-     TWO FINGERS → ZOOM
-  ====================== */
 
-  if (e.evt.touches.length === 2) {
-    const [t1, t2] = e.evt.touches;
 
-    const dx = t1.clientX - t2.clientX;
-    const dy = t1.clientY - t2.clientY;
-    const dist = Math.hypot(dx, dy);
+  const handleTouchMove = (e: Konva.KonvaEventObject<TouchEvent>) => {
+    e.evt.preventDefault();
 
-    const center = {
-      x: (t1.clientX + t2.clientX) / 2,
-      y: (t1.clientY + t2.clientY) / 2,
-    };
+    const stage = stageRef.current;
+    const group = mainGroupRef.current;
+    if (!stage || !group) return;
 
-    if (!lastTouchDist.current || !lastTouchCenter.current) {
+    stage.setPointersPositions(e.evt);
+
+    /* ======================
+       ONE FINGER → PAN
+       (only in SELECT mode)
+    ====================== */
+
+    if (e.evt.touches.length === 1 && action === ACTIONS.SELECT) {
+      const t = e.evt.touches[0];
+
+      if (!lastTouchPos.current) {
+        lastTouchPos.current = { x: t.clientX, y: t.clientY };
+        return;
+      }
+
+      const dx = t.clientX - lastTouchPos.current.x;
+      const dy = t.clientY - lastTouchPos.current.y;
+
+      setGroupStagePos((prev) => ({
+        x: prev.x + dx,
+        y: prev.y + dy,
+      }));
+
+      lastTouchPos.current = { x: t.clientX, y: t.clientY };
+    }
+
+    /* ======================
+       TWO FINGERS → ZOOM
+    ====================== */
+
+    if (e.evt.touches.length === 2) {
+      const [t1, t2] = e.evt.touches;
+
+      const dx = t1.clientX - t2.clientX;
+      const dy = t1.clientY - t2.clientY;
+      const dist = Math.hypot(dx, dy);
+
+      const center = {
+        x: (t1.clientX + t2.clientX) / 2,
+        y: (t1.clientY + t2.clientY) / 2,
+      };
+
+      if (!lastTouchDist.current || !lastTouchCenter.current) {
+        lastTouchDist.current = dist;
+        lastTouchCenter.current = center;
+        return;
+      }
+
+      const scaleBy = dist / lastTouchDist.current;
+      const oldScale = group.scaleX();
+
+      let newScale = oldScale * scaleBy;
+      const MIN = 0.1;
+      const MAX = 1;
+      newScale = Math.max(MIN, Math.min(MAX, newScale));
+
+      const mousePointTo = {
+        x: (center.x - group.x()) / oldScale,
+        y: (center.y - group.y()) / oldScale,
+      };
+
+      setGroupScale(newScale);
+      setGroupStagePos({
+        x: center.x - mousePointTo.x * newScale,
+        y: center.y - mousePointTo.y * newScale,
+      });
+
       lastTouchDist.current = dist;
       lastTouchCenter.current = center;
-      return;
     }
-
-    const scaleBy = dist / lastTouchDist.current;
-    const oldScale = group.scaleX();
-
-    let newScale = oldScale * scaleBy;
-    const MIN = 0.1;
-    const MAX = 1;
-    newScale = Math.max(MIN, Math.min(MAX, newScale));
-
-    const mousePointTo = {
-      x: (center.x - group.x()) / oldScale,
-      y: (center.y - group.y()) / oldScale,
-    };
-
-    setGroupScale(newScale);
-    setGroupStagePos({
-      x: center.x - mousePointTo.x * newScale,
-      y: center.y - mousePointTo.y * newScale,
-    });
-
-    lastTouchDist.current = dist;
-    lastTouchCenter.current = center;
-  }
-};
+  };
 
 
 
-const handleTouchEnd = () => {
-  lastTouchPos.current = null;
-  lastTouchDist.current = null;
-  lastTouchCenter.current = null;
-};
+  const handleTouchEnd = () => {
+    lastTouchPos.current = null;
+    lastTouchDist.current = null;
+    lastTouchCenter.current = null;
+  };
 
 
 
@@ -289,6 +295,15 @@ const handleTouchEnd = () => {
         const scribble = { id, points: [x, y], fillcolor };
         socket.emit("scribble", scribble);
         break;
+
+
+      case ACTIONS.TEXT: {
+        const id = addText("", x, y);
+        setEditingTextId(id);
+        setAction(ACTIONS.SELECT);
+        break;
+      }
+
     }
   };
 
@@ -444,6 +459,10 @@ const handleTouchEnd = () => {
         case "A":
           setAction(ACTIONS.ARROW);
           break;
+        case "T":
+        case "t":
+          setAction(ACTIONS.TEXT);
+          break;
         default:
           break;
       }
@@ -505,6 +524,13 @@ const handleTouchEnd = () => {
     handleWheel,
     pointerProps,
     cursor,
+    textList,
+    updateText,
+    editingTextId,
+    setEditingTextId,
+    removeText,
+    setTextList,
+    handleStageMouseDown,
   };
 };
 
@@ -526,8 +552,17 @@ const useOtherFunctionForEditor = (
 
 
   const onclick = (e: KonvaEventObject<MouseEvent>) => {
-    const target = e.currentTarget;
-    transformRef?.current?.nodes([target]);
+    const node = e.currentTarget;
+    const transformer = transformRef.current;
+    transformer?.nodes([node]);
+  };
+
+  const handleStageMouseDown = (e: KonvaEventObject<MouseEvent>) => {
+    const clickedOnEmpty = e.target === e.target.getStage();
+
+    if (clickedOnEmpty) {
+      transformRef.current?.nodes([]);
+    }
   };
 
   const handleExport = () => {
@@ -586,7 +621,7 @@ const useOtherFunctionForEditor = (
 
       // clamp scale
       const MIN = 0.1;
-      const MAX = 1;
+      const MAX = 5;
 
       const clampedScale = Math.max(MIN, Math.min(MAX, newScale));
 
@@ -620,7 +655,7 @@ const useOtherFunctionForEditor = (
     let newScale = oldScale;
     if (type === "plus") {
       const value = oldScale + factor;
-      if (value <= 1) {
+      if (value <= 5) {
         newScale = value;
       }
     }
@@ -662,6 +697,7 @@ const useOtherFunctionForEditor = (
     handleWheel,
     handleExport,
     onclick,
+    handleStageMouseDown,
     handleFileChange,
     resetZoom,
   };
