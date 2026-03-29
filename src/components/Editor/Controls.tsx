@@ -1,4 +1,4 @@
-import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download, Text } from 'lucide-react';
+import {Image, MousePointer2, Square, Circle, Pencil, MoveRight, Download, Text, Undo2, Redo2 } from 'lucide-react';
 import React from "react";
 import { ACTIONS } from "../../utils/constant";
 
@@ -10,10 +10,14 @@ interface Props {
   setAction: (action: string) => void,
   fillcolor: string,
   setFillColor: (fillcolor: string) => void,
-  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void
+  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void,
+  handleUndo: () => void,
+  handleRedo: () => void,
+  canUndo: boolean,
+  canRedo: boolean
 }
 
-const Controls: React.FC<Props> = ({handleExport, action, setAction,handleFileChange }) => {
+const Controls: React.FC<Props> = ({handleExport, action, setAction, handleFileChange, handleUndo, handleRedo, canUndo, canRedo }) => {
   return (
     <div className="parent-container w-full">
       <ul className="controls-container bg-[var(--background)] p-2 sm:rounded-xl shadow-md items-center">
@@ -35,6 +39,13 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction,handleFileCh
         <li className={action == ACTIONS.TEXT ? "active p-2" : ""} onClick={()=> setAction(ACTIONS.TEXT)}>
           <Text/>
         </li>
+        <li style={{width: '1px', height: '20px', backgroundColor: 'gray', margin: '0 8px'}} />
+        <li className={`p-2 cursor-pointer ${!canUndo ? 'opacity-50' : 'hover:scale-110'}`} onClick={canUndo ? handleUndo : undefined}>
+          <Undo2 />
+        </li>
+        <li className={`p-2 cursor-pointer ${!canRedo ? 'opacity-50' : 'hover:scale-110'}`} onClick={canRedo ? handleRedo : undefined}>
+          <Redo2 />
+        </li>
         {/* <li className="relative hidden sm:block">
           <div
             className={cn(
@@ -54,7 +65,7 @@ const Controls: React.FC<Props> = ({handleExport, action, setAction,handleFileCh
           <label htmlFor="image" className="cursor-pointer">
             <Image />
           </label>
-          <input id='image' type="file" style={{ display: "none" }} onChange={handleFileChange} accept='image/*' />
+          <input id='image' type="file" multiple style={{ display: "none" }} onChange={handleFileChange} accept='image/*' />
         </li>
 
         <li onClick={handleExport} className="cursor-pointer mx-4">

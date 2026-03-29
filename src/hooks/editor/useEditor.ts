@@ -5,6 +5,7 @@ import {
   ImageType,
   RectangleType,
   ScribbleType,
+  CanvasText,
 } from "@/types/PainTypes";
 import { ACTIONS } from "@/utils/constant";
 import { DefaultEventsMap } from "@socket.io/component-emitter";
@@ -21,10 +22,12 @@ import {
   useMemo,
   useRef,
   useState,
+  useCallback,
 } from "react";
 import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { useText } from "./useText";
+import { useHistory, CanvasState } from "./useHistory";
 
 export const useEditor = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
@@ -62,6 +65,70 @@ export const useEditor = (
   const [arrows, setArrows] = useState<ArrowType[]>([]);
   const [scribbles, setScribble] = useState<ScribbleType[]>([]);
 
+  const { commit, undo, redo, canUndo, canRedo } = useHistory({
+    rectangles: [], circles: [], arrows: [], scribbles: [], images: [], textList: []
+  });
+
+  const commitToHistory = useCallback((overrides?: Partial<CanvasState>) => {
+    commit({
+      rectangles, circles, arrows, scribbles, images, textList,
+      ...(overrides || {})
+    });
+  }, [rectangles, circles, arrows, scribbles, images, textList, commit]);
+
+  const handleUndo = useCallback(() => {
+    undo((state: CanvasState) => {
+      setRectangles(state.rectangles);
+      setCircles(state.circles);
+      setArrows(state.arrows);
+      setScribble(state.scribbles);
+      setImages(state.images);
+      setTextList(state.textList);
+    });
+  }, [undo, setTextList]);
+
+  const handleRedo = useCallback(() => {
+    redo((state: CanvasState) => {
+      setRectangles(state.rectangles);
+      setCircles(state.circles);
+      setArrows(state.arrows);
+      setScribble(state.scribbles);
+      setImages(state.images);
+      setTextList(state.textList);
+    });
+  }, [redo, setTextList]);
+
+  const updateShape = (type: string, id: string, newProps: any) => {
+    let overrides: Partial<CanvasState> = {};
+    if (type === "rectangle") {
+      const next = rectangles.map(r => r.id === id ? { ...r, ...newProps } : r);
+      setRectangles(next); overrides.rectangles = next;
+    } else if (type === "circle") {
+      const next = circles.map(c => c.id === id ? { ...c, ...newProps } : c);
+      setCircles(next); overrides.circles = next;
+    } else if (type === "arrow") {
+      const next = arrows.map(a => a.id === id ? { ...a, ...newProps } : a);
+      setArrows(next); overrides.arrows = next;
+    } else if (type === "scribble") {
+      const next = scribbles.map(s => s.id === id ? { ...s, ...newProps } : s);
+      setScribble(next); overrides.scribbles = next;
+    } else if (type === "image") {
+      const next = images.map(i => i.id === id ? { ...i, ...newProps } : i);
+      setImages(next); overrides.images = next;
+    }
+    commitToHistory(overrides);
+  };
+
+  const handleTextUpdate = (id: string, updates: Partial<CanvasText>) => {
+    updateText(id, updates);
+    commitToHistory({ textList: textList.map(t => t.id === id ? { ...t, ...updates } : t) });
+  };
+
+  const handleTextRemove = (id: string) => {
+    removeText(id);
+    commitToHistory({ textList: textList.filter(t => t.id !== id) });
+  };
+
   const lastTouchPos = useRef<{ x: number; y: number } | null>(null);
   const lastTouchDist = useRef<number | null>(null);
   const lastTouchCenter = useRef<{ x: number; y: number } | null>(null);
@@ -77,7 +144,8 @@ export const useEditor = (
     handleFileChange,
     onclick,
     resetZoom,
-    handleStageMouseDown,
+    handleDrop,
+    handleDragOver,
   } = useOtherFunctionForEditor(
     viewportWidth,
     viewportHeight,
@@ -86,7 +154,8 @@ export const useEditor = (
     setGroupStagePos,
     stageRef,
     transformRef,
-    setImages
+    setImages,
+    commitToHistory
   );
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
@@ -350,13 +419,13 @@ export const useEditor = (
             if (cir.id === currentShapeId.current) {
               const circle: CircleType = {
                 ...cir,
-                radius: ((y - cir.y) ** 2 + (x - cir.y) ** 2) ** 0.5,
+                radius: ((y - cir.y) ** 2 + (x - cir.x) ** 2) ** 0.5,
               };
               socket.emit("circle", circle);
 
               return {
                 ...cir,
-                radius: ((y - cir.y) ** 2 + (x - cir.y) ** 2) ** 0.5,
+                radius: ((y - cir.y) ** 2 + (x - cir.x) ** 2) ** 0.5,
               };
             }
             return cir;
@@ -408,6 +477,9 @@ export const useEditor = (
   };
 
   const onpointerup = () => {
+    if (isPainting.current) {
+       commitToHistory();
+    }
     isPainting.current = false;
   };
 
@@ -419,6 +491,10 @@ export const useEditor = (
     setFillColor,
     handleFileChange,
     isDark,
+    handleUndo,
+    handleRedo,
+    canUndo,
+    canRedo,
   };
 
   const pointerProps = {
@@ -472,11 +548,25 @@ export const useEditor = (
         e.preventDefault();
         resetZoom();
       }
+
+      // Undo/Redo Shortcuts
+      if ((e.ctrlKey || e.metaKey) && (e.key === "z" || e.key === "Z")) {
+        e.preventDefault();
+        if (e.shiftKey) {
+          handleRedo();
+        } else {
+          handleUndo();
+        }
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || e.key === "Y")) {
+        e.preventDefault();
+        handleRedo();
+      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [setAction, resetZoom]);
+  }, [setAction, resetZoom, handleUndo, handleRedo]);
 
   const shapeControls = {
     arrows,
@@ -530,7 +620,15 @@ export const useEditor = (
     setEditingTextId,
     removeText,
     setTextList,
-    handleStageMouseDown,
+    handleDrop,
+    handleDragOver,
+    handleUndo,
+    handleRedo,
+    canUndo,
+    canRedo,
+    updateShape,
+    handleTextUpdate,
+    handleTextRemove,
   };
 };
 
@@ -547,7 +645,8 @@ const useOtherFunctionForEditor = (
   >,
   stageRef: RefObject<Stage>,
   transformRef: MutableRefObject<any>,
-  setImages: Dispatch<SetStateAction<ImageType[]>>
+  setImages: Dispatch<SetStateAction<ImageType[]>>,
+  commitToHistory: (overrides?: Partial<CanvasState>) => void
 ) => {
 
 
@@ -555,14 +654,6 @@ const useOtherFunctionForEditor = (
     const node = e.currentTarget;
     const transformer = transformRef.current;
     transformer?.nodes([node]);
-  };
-
-  const handleStageMouseDown = (e: KonvaEventObject<MouseEvent>) => {
-    const clickedOnEmpty = e.target === e.target.getStage();
-
-    if (clickedOnEmpty) {
-      transformRef.current?.nodes([]);
-    }
   };
 
   const handleExport = () => {
@@ -579,19 +670,82 @@ const useOtherFunctionForEditor = (
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const fileArray = Array.from(event.target.files);
-
       handleFilesChange(fileArray);
+      event.target.value = '';
     }
   };
 
-  const handleFilesChange = (files: File[]) => {
-    const filesArray = files.map((file) => {
-      const url = URL.createObjectURL(file);
+  const handleFilesChange = (files: File[], dropX?: number, dropY?: number) => {
+    const groupRef = mainGroupRef.current;
+    let startX = dropX ?? 0;
+    let startY = dropY ?? 0;
 
-      return { src: url, x: 0, y: 0 };
+    if (dropX === undefined && groupRef) {
+      const scale = groupRef.scaleX();
+      startX = (viewportWidth / 2 - groupRef.x()) / scale;
+      startY = (viewportHeight / 2 - groupRef.y()) / scale;
+    }
+
+    const filesArray = files.map((file, i) => {
+      const url = URL.createObjectURL(file);
+      return { id: uuid(), src: url, x: startX + i * 20, y: startY + i * 20 };
     });
-    setImages((images) => [...images, ...filesArray]);
+    setImages((images) => {
+      const nextImages = [...images, ...filesArray];
+      setTimeout(() => commitToHistory({ images: nextImages }), 0);
+      return nextImages;
+    });
   };
+
+  const handleDrop = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+    const stage = stageRef.current;
+    const group = mainGroupRef.current;
+    if (!stage || !group) return;
+
+    stage.setPointersPositions(e.nativeEvent);
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return;
+
+    const scale = group.scaleX();
+    const dropX = (pointer.x - group.x()) / scale;
+    const dropY = (pointer.y - group.y()) / scale;
+
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (files.length > 0) {
+        handleFilesChange(files, dropX, dropY);
+      }
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
+    e.preventDefault();
+  };
+
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const files: File[] = [];
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      
+      if (files.length > 0) {
+        handleFilesChange(files);
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [viewportWidth, viewportHeight, mainGroupRef]);
 
 
   const handleWheel = (e: Konva.KonvaEventObject<WheelEvent>) => {
@@ -697,9 +851,10 @@ const useOtherFunctionForEditor = (
     handleWheel,
     handleExport,
     onclick,
-    handleStageMouseDown,
     handleFileChange,
     resetZoom,
+    handleDrop,
+    handleDragOver,
   };
 }
 

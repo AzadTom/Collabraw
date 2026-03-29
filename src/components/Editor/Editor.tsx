@@ -49,11 +49,14 @@ function Editor() {
     pointerProps,
     cursor,
     textList,
-    updateText,
-    removeText,
     editingTextId,
     setEditingTextId,
     setTextList,
+    handleDrop,
+    handleDragOver,
+    updateShape,
+    handleTextUpdate,
+    handleTextRemove,
   } = useEditor(socket, viewportWidth, viewportHeight);
 
   const {
@@ -136,7 +139,10 @@ function Editor() {
     <section className="relative" style={{
       touchAction: "none",
       overscrollBehavior: "none",
-    }}>
+    }}
+    onDrop={handleDrop}
+    onDragOver={handleDragOver}
+    >
       <Controls {...controlProps} />
       <Stage
         ref={stageRef}
@@ -175,11 +181,19 @@ function Editor() {
                 key={rec.id}
                 x={rec.x}
                 y={rec.y}
+                scaleX={rec.scaleX || 1}
+                scaleY={rec.scaleY || 1}
+                rotation={rec.rotation || 0}
                 fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 width={rec.width}
                 height={rec.height}
                 draggable
                 onClick={onclick}
+                onDragEnd={(e) => updateShape("rectangle", rec.id, { x: e.target.x(), y: e.target.y() })}
+                onTransformEnd={(e) => {
+                  const node = e.target;
+                  updateShape("rectangle", rec.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                }}
               />
             ))}
             {circles.map((cir) => (
@@ -187,26 +201,49 @@ function Editor() {
                 key={cir.id}
                 x={cir.x}
                 y={cir.y}
+                scaleX={cir.scaleX || 1}
+                scaleY={cir.scaleY || 1}
+                rotation={cir.rotation || 0}
                 radius={cir.radius}
                 fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 draggable
                 onClick={onclick}
+                onDragEnd={(e) => updateShape("circle", cir.id, { x: e.target.x(), y: e.target.y() })}
+                onTransformEnd={(e) => {
+                  const node = e.target;
+                  updateShape("circle", cir.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                }}
               />
             ))}
             {arrows.map((arrow) => (
               <Arrow
                 key={arrow.id}
+                x={arrow.x || 0}
+                y={arrow.y || 0}
+                scaleX={arrow.scaleX || 1}
+                scaleY={arrow.scaleY || 1}
+                rotation={arrow.rotation || 0}
                 points={arrow.points}
                 stroke={isDark ? "#f7f7f7" : "#1e1e1e"}
                 strokeWidth={2}
                 fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                 draggable
                 onClick={onclick}
+                onDragEnd={(e) => updateShape("arrow", arrow.id, { x: e.target.x(), y: e.target.y() })}
+                onTransformEnd={(e) => {
+                  const node = e.target;
+                  updateShape("arrow", arrow.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                }}
               />
             ))}
             {scribbles.map((scribble) => (
               <Line
                 key={scribble.id}
+                x={scribble.x || 0}
+                y={scribble.y || 0}
+                scaleX={scribble.scaleX || 1}
+                scaleY={scribble.scaleY || 1}
+                rotation={scribble.rotation || 0}
                 points={scribble.points}
                 stroke={isDark ? "#f7f7f7" : "#1e1e1e"}
                 strokeWidth={2}
@@ -214,11 +251,26 @@ function Editor() {
                 lineCap="round"
                 lineJoin="round"
                 draggable
+                onClick={onclick}
+                hitStrokeWidth={10}
+                onDragEnd={(e) => updateShape("scribble", scribble.id, { x: e.target.x(), y: e.target.y() })}
+                onTransformEnd={(e) => {
+                  const node = e.target;
+                  updateShape("scribble", scribble.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                }}
               />
-
             ))}
-            {images.map((image, index) => (
-              <URLImage key={index} image={image} onclick={onclick} />
+            {images.map((image) => (
+              <URLImage 
+                key={image.id} 
+                image={image} 
+                onclick={onclick} 
+                onDragEnd={(e: any) => updateShape("image", image.id, { x: e.target.x(), y: e.target.y() })}
+                onTransformEnd={(e: any) => {
+                  const node = e.target;
+                  updateShape("image", image.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                }}
+              />
             ))}
             {textList.map((textItem) => (
               <TextNode
@@ -230,22 +282,22 @@ function Editor() {
                   transformRef.current?.nodes([]);
                 }}
                 onChange={(newText) => {
-                  updateText(textItem.id, { text: newText });
+                  handleTextUpdate(textItem.id, { text: newText });
                   socket.emit("text", { ...textItem, text: newText });
                 }}
                 onPositionChange={(x, y) => {
-                  updateText(textItem.id, { x, y });
+                  handleTextUpdate(textItem.id, { x, y });
                   socket.emit("text", { ...textItem, x, y });
                 }}
                 onBlur={() => {
                   setEditingTextId(null);
                   if (!textItem.text.trim()) {
-                    removeText(textItem.id);
+                    handleTextRemove(textItem.id);
                   }
                 }}
                 onSelect={onclick}
                 onTransformEnd={(newProps: any) => {
-                  updateText(textItem.id, newProps);
+                  handleTextUpdate(textItem.id, newProps);
                   socket.emit("text", { ...textItem, ...newProps });
                 }}
               />
