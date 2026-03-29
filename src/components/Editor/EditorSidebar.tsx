@@ -17,18 +17,18 @@ interface EditorSidebarProps {
 export function EditorSidebar({ controlProps }: EditorSidebarProps) {
   return (
     <Sidebar variant="sidebar" className="border-r shadow-sm border-neutral-200 dark:border-neutral-800">
-      <SidebarHeader className="p-4 flex items-center justify-center font-bold text-lg border-b">
+      <SidebarHeader style={{ padding: "12px 0px" }} className="p-4 flex items-center justify-center font-bold text-lg border-b">
         Canvas Tools
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent style={{marginLeft:"8px"}}>
         <SidebarGroup className="p-4 flex flex-col gap-2">
-          <SidebarGroupLabel className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Drawing & Selection</SidebarGroupLabel>
+          <SidebarGroupLabel style={{marginLeft:"8px"}} className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Drawing & Selection</SidebarGroupLabel>
           <SidebarGroupContent>
             <Controls {...controlProps} />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t flex flex-col gap-4">
+      <SidebarFooter className="p-4 border-t flex flex-col gap-4" style={{ padding: "12px" }}>
         <LoginButton />
       </SidebarFooter>
     </Sidebar>
