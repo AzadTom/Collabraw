@@ -127,6 +127,10 @@ function Editor() {
   ]);
 
   const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
+    if (document.activeElement instanceof HTMLTextAreaElement) {
+      document.activeElement.blur();
+    }
+
     const clickedOnEmpty =
       e.target === e.target.getStage() ||
       e.target.id() === "bg";

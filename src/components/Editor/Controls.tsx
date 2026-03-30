@@ -65,20 +65,20 @@ const Controls: React.FC<Props> = ({ handleExport, action, setAction, handleFile
 
       <SidebarMenuItem>
         <SidebarMenuButton asChild>
-          <label htmlFor="image" className="cursor-pointer" onClick={handleClose}>
+          <label htmlFor="image" className="cursor-pointer">
             <Image style={{marginLeft:"8px"}}  /> Import Image
           </label>
         </SidebarMenuButton>
-        <input id="image" type="file" multiple style={{ display: "none" }} onChange={handleFileChange} accept="image/*" />
+        <input id="image" type="file" multiple style={{ display: "none" }} onChange={(e) => { handleFileChange(e); handleClose(); }} accept="image/*" />
       </SidebarMenuItem>
 
       <SidebarMenuItem>
-        <SidebarMenuButton disabled={!canUndo} onClick={canUndo ? () => { handleUndo(); handleClose(); } : undefined}>
+        <SidebarMenuButton disabled={!canUndo} onClick={canUndo ? () => { handleUndo(); } : undefined}>
           <Undo2 style={{marginLeft:"8px"}} /> Undo
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton disabled={!canRedo} onClick={canRedo ? () => { handleRedo(); handleClose(); } : undefined}>
+        <SidebarMenuButton disabled={!canRedo} onClick={canRedo ? () => { handleRedo(); } : undefined}>
           <Redo2 style={{marginLeft:"8px"}} /> Redo
         </SidebarMenuButton>
       </SidebarMenuItem>
