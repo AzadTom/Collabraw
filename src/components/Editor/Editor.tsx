@@ -26,8 +26,9 @@ import { useWindowSize } from "@/hooks/utility/utility";
 import { cn } from "@/lib/utils";
 import ZoomInOut from "./ZoomInOut";
 import { KonvaEventObject } from "konva/lib/Node";
+import { URL } from "@/utils/constant";
 
-const socket = io("https://white-board-backend-socket.vercel.app/");
+const socket = io(URL);
 
 function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
@@ -43,6 +44,7 @@ function Editor() {
     groupStagePos,
     zoom,
     images,
+    setImages,
     transformRef,
     onclick,
     shapeControls,
@@ -73,60 +75,7 @@ function Editor() {
   } = shapeControls;
   const { onpointerdown, onpointerup, onpointermove } = pointerProps;
 
-  useEffect(() => {
-    socket.on("server-ready", () => {
-      console.log("connected!");
-    });
-
-    socket.on("onrectangle", (rect: RectangleType) => {
-      if (!rectangles.includes(rect)) {
-        setRectangles((prev) => [...prev, rect]);
-      }
-    });
-
-    socket.on("oncircle", (circle: CircleType) => {
-      if (!circles.includes(circle)) {
-        setCircles((prev) => [...prev, circle]);
-      }
-    });
-
-    socket.on("onarrow", (arrow: ArrowType) => {
-      if (!arrows.includes(arrow)) {
-        setArrows((prev) => [...prev, arrow]);
-      }
-    });
-
-    socket.on("onscribble", (scribble: ScribbleType) => {
-      if (!scribbles.includes(scribble)) {
-        setScribble((prev) => [...prev, scribble]);
-      }
-    });
-
-    socket.on("ontext", (textItem) => {
-      setTextList((prev) => {
-        const index = prev.findIndex((t) => t.id === textItem.id);
-        if (index > -1) {
-          const newTexts = [...prev];
-          newTexts[index] = textItem;
-          return newTexts;
-        }
-        return [...prev, textItem];
-      });
-    });
-  }, [
-    rectangles,
-    circles,
-    arrows,
-    scribbles,
-    textList,
-    setRectangles,
-    setCircles,
-    setArrows,
-    setScribble,
-    setTextList,
-  ]);
-
-  const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
+   const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
     if (document.activeElement instanceof HTMLTextAreaElement) {
       document.activeElement.blur();
     }
@@ -140,6 +89,125 @@ function Editor() {
       onpointerdown();
     }
   };
+
+
+
+  useEffect(() => {
+
+    socket.on('connect', () => {
+      socket.emit("client-ready", { id: socket.id });
+    });
+
+    socket.on("server-ready", () => {
+      console.log("connected!");
+    });
+
+    socket.on("onrectangle", (rect: RectangleType) => {
+      setRectangles((prev) => {
+        const index = prev.findIndex((r) => r.id === rect.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = rect;
+          return updated;
+        }
+        return [...prev, rect];
+      });
+    });
+
+    socket.on("rect-update", (data: { id: string; props: Partial<RectangleType> }) => {
+      setRectangles((prev) =>
+        prev.map((r) => (r.id === data.id ? { ...r, ...data.props } : r))
+      );
+    });
+
+    socket.on("oncircle", (circle: CircleType) => {
+      setCircles((prev) => {
+        const index = prev.findIndex((c) => c.id === circle.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = circle;
+          return updated;
+        }
+        return [...prev, circle];
+      });
+    });
+
+    socket.on("circle-update", (data: { id: string; props: Partial<CircleType> }) => {
+      setCircles((prev) =>
+        prev.map((c) => (c.id === data.id ? { ...c, ...data.props } : c))
+      );
+    });
+
+    socket.on("onarrow", (arrow: ArrowType) => {
+      setArrows((prev) => {
+        const index = prev.findIndex((a) => a.id === arrow.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = arrow;
+          return updated;
+        }
+        return [...prev, arrow];
+      });
+    });
+
+    socket.on("arrow-update", (data: { id: string; props: Partial<ArrowType> }) => {
+      setArrows((prev) =>
+        prev.map((a) => (a.id === data.id ? { ...a, ...data.props } : a))
+      );
+    });
+
+    socket.on("onscribble", (scribble: ScribbleType) => {
+      setScribble((prev) => {
+        const index = prev.findIndex((s) => s.id === scribble.id);
+        if (index > -1) {
+          const updated = [...prev];
+          updated[index] = scribble;
+          return updated;
+        }
+        return [...prev, scribble];
+      });
+    });
+
+    socket.on("scribble-update", (data: { id: string; props: Partial<ScribbleType> }) => {
+      setScribble((prev) =>
+        prev.map((s) => (s.id === data.id ? { ...s, ...data.props } : s))
+      );
+    });
+
+    socket.on("image-update", (data: { id: string; props: Record<string, any> }) => {
+      setImages((prev) =>
+        prev.map((i) => (i.id === data.id ? { ...i, ...data.props } : i))
+      );
+    });
+
+    socket.on("ontext", (textItem) => {
+      setTextList((prev) => {
+        const index = prev.findIndex((t) => t.id === textItem.id);
+        if (index > -1) {
+          const newTexts = [...prev];
+          newTexts[index] = textItem;
+          return newTexts;
+        }
+        return [...prev, textItem];
+      });
+    });
+
+    return () => {
+      socket.off("connect");
+      socket.off("server-ready");
+      socket.off("onrectangle");
+      socket.off("rect-update");
+      socket.off("oncircle");
+      socket.off("circle-update");
+      socket.off("onarrow");
+      socket.off("arrow-update");
+      socket.off("onscribble");
+      socket.off("scribble-update");
+      socket.off("image-update");
+      socket.off("ontext");
+    };
+  }, [setRectangles, setCircles, setArrows, setScribble, setImages, setTextList]);
+
 
   return (
     <TooltipProvider>
@@ -202,10 +270,16 @@ function Editor() {
                     height={rec.height}
                     draggable
                     onClick={onclick}
-                    onDragEnd={(e) => updateShape("rectangle", rec.id, { x: e.target.x(), y: e.target.y() })}
+                    onDragEnd={(e) => {
+                      const props = { x: e.target.x(), y: e.target.y() };
+                      updateShape("rectangle", rec.id, props);
+                      socket.emit("rect-update", { id: rec.id, props });
+                    }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      updateShape("rectangle", rec.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      updateShape("rectangle", rec.id, props);
+                      socket.emit("rect-update", { id: rec.id, props });
                     }}
                   />
                 ))}
@@ -221,10 +295,16 @@ function Editor() {
                     fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                     draggable
                     onClick={onclick}
-                    onDragEnd={(e) => updateShape("circle", cir.id, { x: e.target.x(), y: e.target.y() })}
+                    onDragEnd={(e) => {
+                      const props = { x: e.target.x(), y: e.target.y() };
+                      updateShape("circle", cir.id, props);
+                      socket.emit("circle-update", { id: cir.id, props });
+                    }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      updateShape("circle", cir.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      updateShape("circle", cir.id, props);
+                      socket.emit("circle-update", { id: cir.id, props });
                     }}
                   />
                 ))}
@@ -242,10 +322,16 @@ function Editor() {
                     fill={isDark ? "#f7f7f7" : "#1e1e1e"}
                     draggable
                     onClick={onclick}
-                    onDragEnd={(e) => updateShape("arrow", arrow.id, { x: e.target.x(), y: e.target.y() })}
+                    onDragEnd={(e) => {
+                      const props = { x: e.target.x(), y: e.target.y() };
+                      updateShape("arrow", arrow.id, props);
+                      socket.emit("arrow-update", { id: arrow.id, props });
+                    }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      updateShape("arrow", arrow.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      updateShape("arrow", arrow.id, props);
+                      socket.emit("arrow-update", { id: arrow.id, props });
                     }}
                   />
                 ))}
@@ -266,10 +352,16 @@ function Editor() {
                     draggable
                     onClick={onclick}
                     hitStrokeWidth={10}
-                    onDragEnd={(e) => updateShape("scribble", scribble.id, { x: e.target.x(), y: e.target.y() })}
+                    onDragEnd={(e) => {
+                      const props = { x: e.target.x(), y: e.target.y() };
+                      updateShape("scribble", scribble.id, props);
+                      socket.emit("scribble-update", { id: scribble.id, props });
+                    }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      updateShape("scribble", scribble.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      updateShape("scribble", scribble.id, props);
+                      socket.emit("scribble-update", { id: scribble.id, props });
                     }}
                   />
                 ))}
@@ -278,10 +370,16 @@ function Editor() {
                     key={image.id}
                     image={image}
                     onclick={onclick}
-                    onDragEnd={(e: any) => updateShape("image", image.id, { x: e.target.x(), y: e.target.y() })}
+                    onDragEnd={(e: any) => {
+                      const props = { x: e.target.x(), y: e.target.y() };
+                      updateShape("image", image.id, props);
+                      socket.emit("image-update", { id: image.id, props });
+                    }}
                     onTransformEnd={(e: any) => {
                       const node = e.target;
-                      updateShape("image", image.id, { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() });
+                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      updateShape("image", image.id, props);
+                      socket.emit("image-update", { id: image.id, props });
                     }}
                   />
                 ))}

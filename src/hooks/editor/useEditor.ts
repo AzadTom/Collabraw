@@ -801,7 +801,7 @@ const useOtherFunctionForEditor = (
 
 
 
-  const zoom = (factor: number, type: String) => {
+  const zoom = (factor: number, type: string) => {
     const groupRef = mainGroupRef.current;
     if (!groupRef) return;
 

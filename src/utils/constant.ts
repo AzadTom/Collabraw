@@ -10,3 +10,6 @@ export const ACTIONS = {
     ERASER:"eraser",
     TEXT:"TEXT"
 }
+
+// export const URL = "https://white-board-backend-socket.vercel.app/";
+export const URL = "http://localhost:3001/";
