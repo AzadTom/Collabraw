@@ -1,6 +1,6 @@
 import { Minus, Plus } from "lucide-react";
 
-const ZoomInOut = ({groupScale,zoom}:{groupScale:number,zoom:(factor: number, type: String) => void}) => {
+const ZoomInOut = ({groupScale,zoom}:{groupScale:number,zoom:(factor: number, type: string) => void}) => {
 
   return (
     <div

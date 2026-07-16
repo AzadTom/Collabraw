@@ -28,6 +28,7 @@ import { Socket } from "socket.io-client";
 import { v4 as uuid } from "uuid";
 import { useText } from "./useText";
 import { useHistory, CanvasState } from "./useHistory";
+import { useCloudinaryUpload } from "../utility/useCloudinaryUpload";
 
 export const useEditor = (
   socket: Socket<DefaultEventsMap, DefaultEventsMap>,
@@ -36,6 +37,7 @@ export const useEditor = (
 ) => {
 
   const { isDark } = useTheme();
+  const { uploadImages, loading: isUploadingImage, error: uploadError } = useCloudinaryUpload();
 
   const stageRef = useRef<Konva.Stage>(null);
   const mainGroupRef = useRef<Konva.Group>(null);
@@ -69,12 +71,64 @@ export const useEditor = (
     rectangles: [], circles: [], arrows: [], scribbles: [], images: [], textList: []
   });
 
+  const commitRef = useRef(commit);
+  const undoRef = useRef(undo);
+  const redoRef = useRef(redo);
+
+  useEffect(() => {
+    commitRef.current = commit;
+    undoRef.current = undo;
+    redoRef.current = redo;
+  });
+
+  useEffect(() => {
+    socket.on("history-commit", (state: CanvasState) => {
+      setRectangles(state.rectangles);
+      setCircles(state.circles);
+      setArrows(state.arrows);
+      setScribble(state.scribbles);
+      setImages(state.images);
+      setTextList(state.textList);
+      commitRef.current(state);
+    });
+
+    socket.on("history-undo", () => {
+      undoRef.current((state: CanvasState) => {
+        setRectangles(state.rectangles);
+        setCircles(state.circles);
+        setArrows(state.arrows);
+        setScribble(state.scribbles);
+        setImages(state.images);
+        setTextList(state.textList);
+      });
+    });
+
+    socket.on("history-redo", () => {
+      redoRef.current((state: CanvasState) => {
+        setRectangles(state.rectangles);
+        setCircles(state.circles);
+        setArrows(state.arrows);
+        setScribble(state.scribbles);
+        setImages(state.images);
+        setTextList(state.textList);
+      });
+    });
+
+    return () => {
+      socket.off("history-commit");
+      socket.off("history-undo");
+      socket.off("history-redo");
+    };
+  }, [socket, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList]);
+
   const commitToHistory = useCallback((overrides?: Partial<CanvasState>) => {
-    commit({
+    const nextState = {
       rectangles, circles, arrows, scribbles, images, textList,
       ...(overrides || {})
-    });
-  }, [rectangles, circles, arrows, scribbles, images, textList, commit]);
+    };
+    commit(nextState);
+    socket.emit("history-commit", nextState);
+  }, [rectangles, circles, arrows, scribbles, images, textList, commit, socket]);
 
   const handleUndo = useCallback(() => {
     undo((state: CanvasState) => {
@@ -85,7 +139,8 @@ export const useEditor = (
       setImages(state.images);
       setTextList(state.textList);
     });
-  }, [undo, setTextList]);
+    socket.emit("history-undo");
+  }, [undo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket]);
 
   const handleRedo = useCallback(() => {
     redo((state: CanvasState) => {
@@ -96,7 +151,8 @@ export const useEditor = (
       setImages(state.images);
       setTextList(state.textList);
     });
-  }, [redo, setTextList]);
+    socket.emit("history-redo");
+  }, [redo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket]);
 
   const updateShape = (type: string, id: string, newProps: any) => {
     let overrides: Partial<CanvasState> = {};
@@ -155,7 +211,8 @@ export const useEditor = (
     stageRef,
     transformRef,
     setImages,
-    commitToHistory
+    commitToHistory,
+    uploadImages
   );
 
   const handleTouchStart = (e: Konva.KonvaEventObject<TouchEvent>) => {
@@ -629,6 +686,8 @@ export const useEditor = (
     updateShape,
     handleTextUpdate,
     handleTextRemove,
+    isUploadingImage,
+    uploadError,
   };
 };
 
@@ -646,7 +705,8 @@ const useOtherFunctionForEditor = (
   stageRef: RefObject<Stage>,
   transformRef: MutableRefObject<any>,
   setImages: Dispatch<SetStateAction<ImageType[]>>,
-  commitToHistory: (overrides?: Partial<CanvasState>) => void
+  commitToHistory: (overrides?: Partial<CanvasState>) => void,
+  uploadImages: (files: File[]) => Promise<string[]>
 ) => {
 
 
@@ -675,7 +735,7 @@ const useOtherFunctionForEditor = (
     }
   };
 
-  const handleFilesChange = (files: File[], dropX?: number, dropY?: number) => {
+  const handleFilesChange = async (files: File[], dropX?: number, dropY?: number) => {
     const groupRef = mainGroupRef.current;
     let startX = dropX ?? 0;
     let startY = dropY ?? 0;
@@ -686,8 +746,10 @@ const useOtherFunctionForEditor = (
       startY = (viewportHeight / 2 - groupRef.y()) / scale;
     }
 
-    const filesArray = files.map((file, i) => {
-      const url = URL.createObjectURL(file);
+    const uploadedUrls = await uploadImages(files);
+    if (uploadedUrls.length === 0) return;
+
+    const filesArray = uploadedUrls.map((url, i) => {
       return { id: uuid(), src: url, x: startX + i * 20, y: startY + i * 20 };
     });
     setImages((images) => {
