@@ -11,5 +11,5 @@ export const ACTIONS = {
     TEXT:"TEXT"
 }
 
-// export const URL = "https://white-board-backend-socket.vercel.app/";
-export const URL = "http://localhost:3001/";
+export const URL = "https://white-board-backend-socket.vercel.app/";
+// export const URL = "http://localhost:3001/";
