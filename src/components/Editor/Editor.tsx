@@ -1,4 +1,7 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { UsernameDialog } from "./UsernameDialog";
+import { useLiveCursor } from "@/features/cursor/hooks/useLiveCursor";
+import { RemoteCursors } from "@/features/cursor/components/RemoteCursors";
 import {
   Arrow,
   Circle,
@@ -33,6 +36,26 @@ const socket = io(URL);
 function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
   const gridPattern = useGridPattern(50);
+
+  const [user, setUser] = useState<{ name: string; id: string } | null>(() => {
+    const savedName = localStorage.getItem("collabraw_username");
+    const savedId = localStorage.getItem("collabraw_userid");
+    if (savedName && savedId) {
+      return { name: savedName, id: savedId };
+    }
+    return null;
+  });
+
+  const handleJoin = (username: string, userId: string) => {
+    const newUser = { name: username, id: userId };
+    localStorage.setItem("collabraw_username", username);
+    localStorage.setItem("collabraw_userid", userId);
+    setUser(newUser);
+    if (socket.connected) {
+      socket.emit("client-ready", { id: userId, name: username });
+    }
+  };
+
   const {
     handleTouchStart,
     handleTouchMove,
@@ -64,6 +87,8 @@ function Editor() {
     isUploadingImage,
   } = useEditor(socket, viewportWidth, viewportHeight);
 
+  useLiveCursor(user);
+
   const {
     arrows,
     setArrows,
@@ -94,10 +119,17 @@ function Editor() {
 
 
   useEffect(() => {
+    const handleConnect = () => {
+      if (user) {
+        socket.emit("client-ready", { id: user.id, name: user.name });
+      }
+    };
 
-    socket.on('connect', () => {
-      socket.emit("client-ready", { id: socket.id });
-    });
+    socket.on('connect', handleConnect);
+
+    if (socket.connected && user) {
+      socket.emit("client-ready", { id: user.id, name: user.name });
+    }
 
     socket.on("server-ready", () => {
       console.log("connected!");
@@ -207,7 +239,7 @@ function Editor() {
       socket.off("image-update");
       socket.off("ontext");
     };
-  }, [setRectangles, setCircles, setArrows, setScribble, setImages, setTextList]);
+  }, [setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, user]);
 
 
   return (
@@ -427,8 +459,10 @@ function Editor() {
               </div>
             </div>
           )}
+          <RemoteCursors currentUserId={user?.id} />
         </section>
       </SidebarProvider>
+      <UsernameDialog isOpen={user === null} onJoin={handleJoin} />
     </TooltipProvider>
   );
 }
