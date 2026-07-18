@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo} from "react";
 import { UsernameDialog } from "./UsernameDialog";
 import { useLiveCursor } from "@/features/cursor/hooks/useLiveCursor";
 import { RemoteCursors } from "@/features/cursor/components/RemoteCursors";
@@ -32,12 +32,15 @@ import { KonvaEventObject } from "konva/lib/Node";
 import { URL } from "@/utils/constant";
 import UploadingImagesLoader from "./UploadingImagesLoader";
 import { useUserStore } from "@/stores/useUserStore";
+import { useRoomId } from "@/features/room/hooks/useRoomId";
 
 const socket = io(URL);
 
 function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
-  const gridPattern = useGridPattern(50);
+  const gridPattern = useGridPattern(50);       
+  
+   const roomId = useRoomId();
    const {username,userId} = useUserStore((state) => state);
    const user =  useMemo(() => {
     if (username && userId) {
@@ -109,18 +112,14 @@ function Editor() {
 
 
   useEffect(() => {
-    const handleConnect = () => {
-      if (user) {
-        socket.emit("client-ready", { id: user.id, name: user.name });
-      }
-    };
-
-    socket.on('connect', handleConnect);
-
-    if (socket.connected && user) {
+    if (socket.connected && user?.id) {
       socket.emit("client-ready", { id: user.id, name: user.name });
     }
 
+    if(socket.connected && user?.id){
+      socket.emit("join-room",roomId);
+    }
+    
     socket.on("server-ready", () => {
       console.log("connected!");
     });

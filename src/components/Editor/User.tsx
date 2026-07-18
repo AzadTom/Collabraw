@@ -14,9 +14,9 @@ const User = () => {
 
   if (status) {
     return (
-      <DropdownMenu >
+      <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="absolute top-5 right-5 w-full h-fit">{username.charAt(0).toUpperCase()}</Button>
+          <Button variant="outline" className="absolute top-5 right-5 text-xl size-10 aspect-square rounded-full">{username.charAt(0).toUpperCase()}</Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-40" align="start">
           <DropdownMenuSeparator />
