@@ -1,11 +1,11 @@
 import React from "react";
 import { useRemoteCursors } from "../hooks/useRemoteCursors";
+import { useUserStore } from "@/stores/useUserStore";
 
-interface RemoteCursorsProps {
-  currentUserId?: string;
-}
 
-export const RemoteCursors: React.FC<RemoteCursorsProps> = ({ currentUserId }) => {
+export const RemoteCursors: React.FC = ( ) => {
+
+  const currentUserId = useUserStore((state) => state.userId);
   const remoteCursors = useRemoteCursors();
 
   return (

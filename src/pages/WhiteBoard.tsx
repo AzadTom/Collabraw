@@ -1,5 +1,6 @@
 import ChatRoom from "@/components/ChatRoom";
 import Editor from "@/components/Editor/Editor";
+import User from "@/components/Editor/User";
 
 
 const WhiteBoard = () => {
@@ -7,6 +8,7 @@ const WhiteBoard = () => {
     <>
       <Editor />
       <ChatRoom />
+      <User/>
     </>
   );
 };

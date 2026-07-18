@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
 import {
   Dialog,
   DialogContent,
@@ -10,40 +9,27 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/stores/useUserStore";
 
-interface UsernameDialogProps {
-  isOpen: boolean;
-  onJoin: (username: string, userId: string) => void;
-}
-
-export const UsernameDialog: React.FC<UsernameDialogProps> = ({
-  isOpen,
-  onJoin,
-}) => {
-  const [username, setUsername] = useState("");
+export const UsernameDialog: React.FC = () => {
+  const {status,username,saveInfo} = useUserStore((state)=>state);
+  const [isOpen, setIsOpen] = useState(status ? false:true);
+  const [name,setName] = useState("");
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = username.trim();
-
+    const trimmed = name.trim();
     if (!trimmed) {
       setError("Name is required");
       return;
     }
-
     if (trimmed.length < 2) {
       setError("Name must be at least 2 characters");
       return;
     }
-
-    // Generate a secure random UUID using Web Crypto API if available, or fall back to uuid v4 library
-    const userId =
-      typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
-        ? crypto.randomUUID()
-        : uuidv4();
-
-    onJoin(trimmed, userId);
+    saveInfo(trimmed);
+    setIsOpen(false);
   };
 
   return (
@@ -73,9 +59,9 @@ export const UsernameDialog: React.FC<UsernameDialogProps> = ({
               id="username"
               type="text"
               placeholder="e.g., Alex Johnson"
-              value={username}
+              value={name}
               onChange={(e) => {
-                setUsername(e.target.value);
+                setName(e.target.value);
                 if (error) setError("");
               }}
               autoFocus

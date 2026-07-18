@@ -5,10 +5,7 @@ export class SocketClient {
     private socket: Socket
 
     constructor(url: string) {
-
-        console.log("I am in socket client");
         this.socket = io(url)
-
     }
 
     emit(event: string, payload: unknown) {

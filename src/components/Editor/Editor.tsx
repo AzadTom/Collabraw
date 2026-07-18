@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { UsernameDialog } from "./UsernameDialog";
 import { useLiveCursor } from "@/features/cursor/hooks/useLiveCursor";
 import { RemoteCursors } from "@/features/cursor/components/RemoteCursors";
@@ -30,31 +30,21 @@ import { cn } from "@/lib/utils";
 import ZoomInOut from "./ZoomInOut";
 import { KonvaEventObject } from "konva/lib/Node";
 import { URL } from "@/utils/constant";
+import UploadingImagesLoader from "./UploadingImagesLoader";
+import { useUserStore } from "@/stores/useUserStore";
 
 const socket = io(URL);
 
 function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
   const gridPattern = useGridPattern(50);
-
-  const [user, setUser] = useState<{ name: string; id: string } | null>(() => {
-    const savedName = localStorage.getItem("collabraw_username");
-    const savedId = localStorage.getItem("collabraw_userid");
-    if (savedName && savedId) {
-      return { name: savedName, id: savedId };
+   const {username,userId} = useUserStore((state) => state);
+   const user =  useMemo(() => {
+    if (username && userId) {
+      return { name: username, id: userId };
     }
     return null;
-  });
-
-  const handleJoin = (username: string, userId: string) => {
-    const newUser = { name: username, id: userId };
-    localStorage.setItem("collabraw_username", username);
-    localStorage.setItem("collabraw_userid", userId);
-    setUser(newUser);
-    if (socket.connected) {
-      socket.emit("client-ready", { id: userId, name: username });
-    }
-  };
+  }, [username, userId]);
 
   const {
     handleTouchStart,
@@ -451,18 +441,11 @@ function Editor() {
             </Layer>
           </Stage>
           <ZoomInOut groupScale={groupScale} zoom={zoom} />
-          {isUploadingImage && (
-            <div className="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-background/60 backdrop-blur-sm transition-all duration-300">
-              <div className="flex items-center gap-3 bg-card p-4 rounded-xl border shadow-lg animate-pulse">
-                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                <span className="text-sm font-semibold text-card-foreground">Uploading images to Cloudinary...</span>
-              </div>
-            </div>
-          )}
-          <RemoteCursors currentUserId={user?.id} />
+          <UploadingImagesLoader isUploadingImage={isUploadingImage} /> 
+          <RemoteCursors/>
         </section>
       </SidebarProvider>
-      <UsernameDialog isOpen={user === null} onJoin={handleJoin} />
+      <UsernameDialog/>
     </TooltipProvider>
   );
 }
