@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import { UsernameDialog } from "./UsernameDialog";
+import RoomFullDialog from "./RoomFullDialog";
 import { useLiveCursor } from "@/features/cursor/hooks/useLiveCursor";
 import { RemoteCursors } from "@/features/cursor/components/RemoteCursors";
 import {
@@ -116,6 +117,7 @@ function Editor() {
     if (socket.connected) {
       onConnect();
     }
+
     socket.on("user-joined", () => {
       console.log("user joined");
     });
@@ -540,6 +542,7 @@ function Editor() {
         </section>
       </SidebarProvider>
       <UsernameDialog />
+      <RoomFullDialog socket={socket} />
     </TooltipProvider>
   );
 }

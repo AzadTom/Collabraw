@@ -8,7 +8,7 @@ import {
   CanvasText,
 } from "@/types/PainTypes";
 import { ACTIONS } from "@/utils/constant";
-import { DefaultEventsMap } from "@socket.io/component-emitter";
+
 import Konva from "konva";
 import { Group } from "konva/lib/Group";
 import { KonvaEventObject } from "konva/lib/Node";
