@@ -57,7 +57,7 @@ export const RoomFullDialog: React.FC<RoomFullDialogProps> = ({ socket }) => {
         <DialogFooter className="!pt-4 sm:justify-center">
           <Button
             onClick={handleGoHome}
-            className="w-full font-semibold px-6 py-5 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
+            className="w-max font-semibold !px-6 !py-5 bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:bg-neutral-800 dark:hover:bg-neutral-100 transition-all shadow-md active:scale-[0.98] flex items-center justify-center gap-2"
           >
             <Home className="w-4 h-4" />
             Go to Home Page
