@@ -1,15 +1,39 @@
 import { MessageCircle } from "lucide-react";
-import { useState } from "react";
-import ChatMessageWindow from "./ChatMessageWindow";
+import { useState, useEffect } from "react";
+import ChatMessageWindow, { ChatMessage } from "./ChatMessageWindow";
+import { socketInstance as socket } from "@/features/cursor/services";
+import { useUserStore } from "@/stores/useUserStore";
 
 const ChatRoom = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { userId } = useUserStore((state) => state);
+
+  useEffect(() => {
+    const handleIncomingMessage = (msg: ChatMessage) => {
+      if (!isChatOpen && msg.senderId !== userId) {
+        setUnreadCount((prev) => prev + 1);
+      }
+    };
+
+    socket.on("chat:message", handleIncomingMessage);
+
+    return () => {
+      socket.off("chat:message", handleIncomingMessage);
+    };
+  }, [isChatOpen, userId]);
+
+  const handleOpenChat = () => {
+    setIsChatOpen(true);
+    setUnreadCount(0);
+  };
+
   return (
     <>
       {isChatOpen ? (
         <ChatMessageWindow onClose={() => setIsChatOpen(false)} />
       ) : (
-        <ChatMessageIcon onClick={() => setIsChatOpen(true)} />
+        <ChatMessageIcon onClick={handleOpenChat} unreadCount={unreadCount} />
       )}
     </>
   );
@@ -17,7 +41,13 @@ const ChatRoom = () => {
 
 export default ChatRoom;
 
-const ChatMessageIcon = ({ onClick }: { onClick: () => void }) => {
+const ChatMessageIcon = ({
+  onClick,
+  unreadCount,
+}: {
+  onClick: () => void;
+  unreadCount: number;
+}) => {
   return (
     <div className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] right-[calc(1rem+env(safe-area-inset-right))] z-50 flex items-end">
       <button
@@ -31,6 +61,11 @@ const ChatMessageIcon = ({ onClick }: { onClick: () => void }) => {
           className="relative z-10 text-white transition-transform duration-300 group-hover:scale-110"
           size={23}
         />
+        {unreadCount > 0 && (
+          <span className="absolute -top-1 -right-1 z-20 flex h-5 w-5 items-center justify-center rounded-full bg-cyan-500 text-[10px] font-bold text-black shadow-lg animate-pulse">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
       </button>
     </div>
   );

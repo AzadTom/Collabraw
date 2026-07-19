@@ -31,10 +31,13 @@
     "react-konva": "^18.2.10",
     "react-konva-utils": "^2.0.0",
     "react-pick-color": "^2.0.0",
+    "react-router-dom": "^7.18.1",
     "socket.io-client": "^4.7.5",
     "tailwind-merge": "^3.3.1",
     "use-image": "^1.1.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "yjs": "^13.6.31",
+    "zustand": "^5.0.14"
   },
   "devDependencies": {
     "@types/color": "^4.2.0",

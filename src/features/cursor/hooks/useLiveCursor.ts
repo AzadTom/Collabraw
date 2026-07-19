@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { cursorService } from "../services";
+import { useRoomId } from "@/features/room/hooks/useRoomId";
 
 interface User {
   id: string;
@@ -26,13 +27,15 @@ const getUserColor = (userId: string) => {
 };
 
 export function useLiveCursor(user: User | null) {
+  const roomId = useRoomId();
+
   useEffect(() => {
     if (!user) return;
 
     const userColor = getUserColor(user.id);
 
     const handlePointerMove = (event: PointerEvent) => {
-      cursorService.send({
+      cursorService.send(roomId, {
         userId: user.id,
         x: event.clientX,
         y: event.clientY,
@@ -46,5 +49,5 @@ export function useLiveCursor(user: User | null) {
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
     };
-  }, [user]);
+  }, [user, roomId]);
 }
