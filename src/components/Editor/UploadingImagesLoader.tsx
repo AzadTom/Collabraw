@@ -1,4 +1,4 @@
-import React from "react";
+
 
 const UploadingImagesLoader = ({ isUploadingImage }: { isUploadingImage: boolean }) => {
   return (

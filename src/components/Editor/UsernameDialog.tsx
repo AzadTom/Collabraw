@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useUserStore } from "@/stores/useUserStore";
 
 export const UsernameDialog: React.FC = () => {
-  const {status,username,saveInfo} = useUserStore((state)=>state);
+  const { status, saveInfo } = useUserStore((state) => state);
   const [isOpen, setIsOpen] = useState(status ? false:true);
   const [name,setName] = useState("");
   const [error, setError] = useState("");

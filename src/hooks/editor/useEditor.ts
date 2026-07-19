@@ -31,9 +31,10 @@ import { useHistory, CanvasState } from "./useHistory";
 import { useCloudinaryUpload } from "../utility/useCloudinaryUpload";
 
 export const useEditor = (
-  socket: Socket<DefaultEventsMap, DefaultEventsMap>,
+  socket: Socket,
   viewportWidth: number,
-  viewportHeight: number
+  viewportHeight: number,
+  roomId: string = "roomhome"
 ) => {
 
   const { isDark } = useTheme();
@@ -127,8 +128,8 @@ export const useEditor = (
       ...(overrides || {})
     };
     commit(nextState);
-    socket.emit("history-commit", nextState);
-  }, [rectangles, circles, arrows, scribbles, images, textList, commit, socket]);
+    socket.emit("history-commit", { roomId, state: nextState });
+  }, [rectangles, circles, arrows, scribbles, images, textList, commit, socket, roomId]);
 
   const handleUndo = useCallback(() => {
     undo((state: CanvasState) => {
@@ -139,8 +140,8 @@ export const useEditor = (
       setImages(state.images);
       setTextList(state.textList);
     });
-    socket.emit("history-undo");
-  }, [undo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket]);
+    socket.emit("history-undo", { roomId });
+  }, [undo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket, roomId]);
 
   const handleRedo = useCallback(() => {
     redo((state: CanvasState) => {
@@ -151,8 +152,8 @@ export const useEditor = (
       setImages(state.images);
       setTextList(state.textList);
     });
-    socket.emit("history-redo");
-  }, [redo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket]);
+    socket.emit("history-redo", { roomId });
+  }, [redo, setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, socket, roomId]);
 
   const updateShape = (type: string, id: string, newProps: any) => {
     let overrides: Partial<CanvasState> = {};
@@ -378,7 +379,7 @@ export const useEditor = (
           height: 0,
           fillcolor,
         };
-        socket.emit("rectangle", rect);
+        socket.emit("rectangle", { roomId, rectangle: rect });
         break;
 
       case ACTIONS.CIRCLE:
@@ -393,7 +394,7 @@ export const useEditor = (
           },
         ]);
         const circle = { id, x, y, radius: 20, fillcolor };
-        socket.emit("circle", circle);
+        socket.emit("circle", { roomId, circle });
         break;
 
       case ACTIONS.ARROW:
@@ -406,7 +407,7 @@ export const useEditor = (
           },
         ]);
         const arrow = { id, points: [x, y, x + 20, y + 20], fillcolor };
-        socket.emit("arrow", arrow);
+        socket.emit("arrow", { roomId, arrow });
         break;
 
       case ACTIONS.SCRIBBLE:
@@ -419,7 +420,7 @@ export const useEditor = (
           },
         ]);
         const scribble = { id, points: [x, y], fillcolor };
-        socket.emit("scribble", scribble);
+        socket.emit("scribble", { roomId, scribble });
         break;
 
 
@@ -457,7 +458,7 @@ export const useEditor = (
                 width: x - rec.x,
                 height: y - rec.y,
               };
-              socket.emit("rectangle", rect);
+              socket.emit("rectangle", { roomId, rectangle: rect });
 
               return {
                 ...rec,
@@ -478,7 +479,7 @@ export const useEditor = (
                 ...cir,
                 radius: ((y - cir.y) ** 2 + (x - cir.x) ** 2) ** 0.5,
               };
-              socket.emit("circle", circle);
+              socket.emit("circle", { roomId, circle });
 
               return {
                 ...cir,
@@ -499,7 +500,7 @@ export const useEditor = (
                 points: [arrow.points[0], arrow.points[1], x, y],
                 fillcolor: fillcolor,
               };
-              socket.emit("arrow", arrowshape);
+              socket.emit("arrow", { roomId, arrow: arrowshape });
 
               return {
                 ...arrow,
@@ -519,7 +520,7 @@ export const useEditor = (
                 ...scribble,
                 points: [...scribble.points, x, y],
               };
-              socket.emit("scribble", scribbleshape);
+              socket.emit("scribble", { roomId, scribble: scribbleshape });
 
               return {
                 ...scribble,

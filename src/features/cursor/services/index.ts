@@ -4,4 +4,5 @@ import { CursorService } from "./cursor.service"
 import { SocketClient } from "./socket.service";
 
 const socket = new SocketClient(URL);
-export const cursorService = new CursorService(socket)
+export const socketInstance = socket.getInstance();
+export const cursorService = new CursorService(socketInstance);

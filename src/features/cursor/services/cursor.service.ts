@@ -1,17 +1,18 @@
 import { Cursor } from "./socket.type";
-import { SocketClient } from "./socket.service";
+import { DefaultEventsMap } from "@socket.io/component-emitter";
+import { Socket } from "socket.io-client";
 
 
 
 export class CursorService {
 
     constructor(
-        private socket: SocketClient
+        private socket: Socket<DefaultEventsMap, DefaultEventsMap>
     ) {}
 
-    send(cursor: Cursor) {
+    send(roomId: string, cursor: Cursor) {
 
-        this.socket.emit("cursor:move", cursor)
+        this.socket.emit("cursor:move", { roomId, cursor })
 
     }
 

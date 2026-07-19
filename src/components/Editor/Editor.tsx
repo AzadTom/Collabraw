@@ -1,4 +1,4 @@
-import { useEffect, useMemo} from "react";
+import { useEffect, useMemo } from "react";
 import { UsernameDialog } from "./UsernameDialog";
 import { useLiveCursor } from "@/features/cursor/hooks/useLiveCursor";
 import { RemoteCursors } from "@/features/cursor/components/RemoteCursors";
@@ -23,26 +23,23 @@ import {
   ScribbleType,
   CircleType,
 } from "../../types/PainTypes";
-import { io } from "socket.io-client";
 import { useEditor, useGridPattern } from "@/hooks/editor/useEditor";
 import { useWindowSize } from "@/hooks/utility/utility";
 import { cn } from "@/lib/utils";
 import ZoomInOut from "./ZoomInOut";
 import { KonvaEventObject } from "konva/lib/Node";
-import { URL } from "@/utils/constant";
 import UploadingImagesLoader from "./UploadingImagesLoader";
 import { useUserStore } from "@/stores/useUserStore";
 import { useRoomId } from "@/features/room/hooks/useRoomId";
-
-const socket = io(URL);
+import { socketInstance as socket} from "@/features/cursor/services";
 
 function Editor() {
   const [viewportWidth, viewportHeight] = useWindowSize();
-  const gridPattern = useGridPattern(50);       
-  
-   const roomId = useRoomId();
-   const {username,userId} = useUserStore((state) => state);
-   const user =  useMemo(() => {
+  const gridPattern = useGridPattern(50);
+
+  const roomId = useRoomId();
+  const { username, userId } = useUserStore((state) => state);
+  const user = useMemo(() => {
     if (username && userId) {
       return { name: username, id: userId };
     }
@@ -78,7 +75,7 @@ function Editor() {
     handleTextUpdate,
     handleTextRemove,
     isUploadingImage,
-  } = useEditor(socket, viewportWidth, viewportHeight);
+  } = useEditor(socket, viewportWidth, viewportHeight, roomId);
 
   useLiveCursor(user);
 
@@ -94,14 +91,13 @@ function Editor() {
   } = shapeControls;
   const { onpointerdown, onpointerup, onpointermove } = pointerProps;
 
-   const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
+  const onStagePointerDown = (e: KonvaEventObject<PointerEvent>) => {
     if (document.activeElement instanceof HTMLTextAreaElement) {
       document.activeElement.blur();
     }
 
     const clickedOnEmpty =
-      e.target === e.target.getStage() ||
-      e.target.id() === "bg";
+      e.target === e.target.getStage() || e.target.id() === "bg";
 
     if (clickedOnEmpty) {
       transformRef.current?.nodes([]);
@@ -109,21 +105,29 @@ function Editor() {
     }
   };
 
-
-
   useEffect(() => {
-    if (socket.connected && user?.id) {
-      socket.emit("client-ready", { id: user.id, name: user.name });
-    }
+    const onConnect = () => {
+      if (!user?.id) return;
+      socket.emit("join-room", roomId);
+    };
 
-    if(socket.connected && user?.id){
-      socket.emit("join-room",roomId);
+    socket.on("connect", onConnect);
+
+    if (socket.connected) {
+      onConnect();
     }
-    
-    socket.on("server-ready", () => {
-      console.log("connected!");
+    socket.on("user-joined", () => {
+      console.log("user joined");
     });
 
+    ()=>{
+       socket.off("connect")
+       socket.off("user-joined")
+    }
+  }, [user, roomId]);
+
+  useEffect(() => {
+   
     socket.on("onrectangle", (rect: RectangleType) => {
       setRectangles((prev) => {
         const index = prev.findIndex((r) => r.id === rect.id);
@@ -136,11 +140,14 @@ function Editor() {
       });
     });
 
-    socket.on("rect-update", (data: { id: string; props: Partial<RectangleType> }) => {
-      setRectangles((prev) =>
-        prev.map((r) => (r.id === data.id ? { ...r, ...data.props } : r))
-      );
-    });
+    socket.on(
+      "rect-update",
+      (data: { id: string; props: Partial<RectangleType> }) => {
+        setRectangles((prev) =>
+          prev.map((r) => (r.id === data.id ? { ...r, ...data.props } : r)),
+        );
+      },
+    );
 
     socket.on("oncircle", (circle: CircleType) => {
       setCircles((prev) => {
@@ -154,11 +161,14 @@ function Editor() {
       });
     });
 
-    socket.on("circle-update", (data: { id: string; props: Partial<CircleType> }) => {
-      setCircles((prev) =>
-        prev.map((c) => (c.id === data.id ? { ...c, ...data.props } : c))
-      );
-    });
+    socket.on(
+      "circle-update",
+      (data: { id: string; props: Partial<CircleType> }) => {
+        setCircles((prev) =>
+          prev.map((c) => (c.id === data.id ? { ...c, ...data.props } : c)),
+        );
+      },
+    );
 
     socket.on("onarrow", (arrow: ArrowType) => {
       setArrows((prev) => {
@@ -172,11 +182,14 @@ function Editor() {
       });
     });
 
-    socket.on("arrow-update", (data: { id: string; props: Partial<ArrowType> }) => {
-      setArrows((prev) =>
-        prev.map((a) => (a.id === data.id ? { ...a, ...data.props } : a))
-      );
-    });
+    socket.on(
+      "arrow-update",
+      (data: { id: string; props: Partial<ArrowType> }) => {
+        setArrows((prev) =>
+          prev.map((a) => (a.id === data.id ? { ...a, ...data.props } : a)),
+        );
+      },
+    );
 
     socket.on("onscribble", (scribble: ScribbleType) => {
       setScribble((prev) => {
@@ -190,17 +203,23 @@ function Editor() {
       });
     });
 
-    socket.on("scribble-update", (data: { id: string; props: Partial<ScribbleType> }) => {
-      setScribble((prev) =>
-        prev.map((s) => (s.id === data.id ? { ...s, ...data.props } : s))
-      );
-    });
+    socket.on(
+      "scribble-update",
+      (data: { id: string; props: Partial<ScribbleType> }) => {
+        setScribble((prev) =>
+          prev.map((s) => (s.id === data.id ? { ...s, ...data.props } : s)),
+        );
+      },
+    );
 
-    socket.on("image-update", (data: { id: string; props: Record<string, any> }) => {
-      setImages((prev) =>
-        prev.map((i) => (i.id === data.id ? { ...i, ...data.props } : i))
-      );
-    });
+    socket.on(
+      "image-update",
+      (data: { id: string; props: Record<string, any> }) => {
+        setImages((prev) =>
+          prev.map((i) => (i.id === data.id ? { ...i, ...data.props } : i)),
+        );
+      },
+    );
 
     socket.on("ontext", (textItem) => {
       setTextList((prev) => {
@@ -216,7 +235,6 @@ function Editor() {
 
     return () => {
       socket.off("connect");
-      socket.off("server-ready");
       socket.off("onrectangle");
       socket.off("rect-update");
       socket.off("oncircle");
@@ -228,8 +246,14 @@ function Editor() {
       socket.off("image-update");
       socket.off("ontext");
     };
-  }, [setRectangles, setCircles, setArrows, setScribble, setImages, setTextList, user]);
-
+  }, [
+    setRectangles,
+    setCircles,
+    setArrows,
+    setScribble,
+    setImages,
+    setTextList,
+  ]);
 
   return (
     <TooltipProvider>
@@ -295,13 +319,19 @@ function Editor() {
                     onDragEnd={(e) => {
                       const props = { x: e.target.x(), y: e.target.y() };
                       updateShape("rectangle", rec.id, props);
-                      socket.emit("rect-update", { id: rec.id, props });
+                      socket.emit("rect-update", { roomId, id: rec.id, props });
                     }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      const props = {
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                      };
                       updateShape("rectangle", rec.id, props);
-                      socket.emit("rect-update", { id: rec.id, props });
+                      socket.emit("rect-update", { roomId, id: rec.id, props });
                     }}
                   />
                 ))}
@@ -320,13 +350,27 @@ function Editor() {
                     onDragEnd={(e) => {
                       const props = { x: e.target.x(), y: e.target.y() };
                       updateShape("circle", cir.id, props);
-                      socket.emit("circle-update", { id: cir.id, props });
+                      socket.emit("circle-update", {
+                        roomId,
+                        id: cir.id,
+                        props,
+                      });
                     }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      const props = {
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                      };
                       updateShape("circle", cir.id, props);
-                      socket.emit("circle-update", { id: cir.id, props });
+                      socket.emit("circle-update", {
+                        roomId,
+                        id: cir.id,
+                        props,
+                      });
                     }}
                   />
                 ))}
@@ -347,13 +391,27 @@ function Editor() {
                     onDragEnd={(e) => {
                       const props = { x: e.target.x(), y: e.target.y() };
                       updateShape("arrow", arrow.id, props);
-                      socket.emit("arrow-update", { id: arrow.id, props });
+                      socket.emit("arrow-update", {
+                        roomId,
+                        id: arrow.id,
+                        props,
+                      });
                     }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      const props = {
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                      };
                       updateShape("arrow", arrow.id, props);
-                      socket.emit("arrow-update", { id: arrow.id, props });
+                      socket.emit("arrow-update", {
+                        roomId,
+                        id: arrow.id,
+                        props,
+                      });
                     }}
                   />
                 ))}
@@ -377,13 +435,27 @@ function Editor() {
                     onDragEnd={(e) => {
                       const props = { x: e.target.x(), y: e.target.y() };
                       updateShape("scribble", scribble.id, props);
-                      socket.emit("scribble-update", { id: scribble.id, props });
+                      socket.emit("scribble-update", {
+                        roomId,
+                        id: scribble.id,
+                        props,
+                      });
                     }}
                     onTransformEnd={(e) => {
                       const node = e.target;
-                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      const props = {
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                      };
                       updateShape("scribble", scribble.id, props);
-                      socket.emit("scribble-update", { id: scribble.id, props });
+                      socket.emit("scribble-update", {
+                        roomId,
+                        id: scribble.id,
+                        props,
+                      });
                     }}
                   />
                 ))}
@@ -395,13 +467,27 @@ function Editor() {
                     onDragEnd={(e: any) => {
                       const props = { x: e.target.x(), y: e.target.y() };
                       updateShape("image", image.id, props);
-                      socket.emit("image-update", { id: image.id, props });
+                      socket.emit("image-update", {
+                        roomId,
+                        id: image.id,
+                        props,
+                      });
                     }}
                     onTransformEnd={(e: any) => {
                       const node = e.target;
-                      const props = { x: node.x(), y: node.y(), scaleX: node.scaleX(), scaleY: node.scaleY(), rotation: node.rotation() };
+                      const props = {
+                        x: node.x(),
+                        y: node.y(),
+                        scaleX: node.scaleX(),
+                        scaleY: node.scaleY(),
+                        rotation: node.rotation(),
+                      };
                       updateShape("image", image.id, props);
-                      socket.emit("image-update", { id: image.id, props });
+                      socket.emit("image-update", {
+                        roomId,
+                        id: image.id,
+                        props,
+                      });
                     }}
                   />
                 ))}
@@ -416,11 +502,17 @@ function Editor() {
                     }}
                     onChange={(newText) => {
                       handleTextUpdate(textItem.id, { text: newText });
-                      socket.emit("text", { ...textItem, text: newText });
+                      socket.emit("text", {
+                        roomId,
+                        textItem: { ...textItem, text: newText },
+                      });
                     }}
                     onPositionChange={(x, y) => {
                       handleTextUpdate(textItem.id, { x, y });
-                      socket.emit("text", { ...textItem, x, y });
+                      socket.emit("text", {
+                        roomId,
+                        textItem: { ...textItem, x, y },
+                      });
                     }}
                     onBlur={() => {
                       setEditingTextId(null);
@@ -431,7 +523,10 @@ function Editor() {
                     onSelect={onclick}
                     onTransformEnd={(newProps: any) => {
                       handleTextUpdate(textItem.id, newProps);
-                      socket.emit("text", { ...textItem, ...newProps });
+                      socket.emit("text", {
+                        roomId,
+                        textItem: { ...textItem, ...newProps },
+                      });
                     }}
                   />
                 ))}
@@ -440,11 +535,11 @@ function Editor() {
             </Layer>
           </Stage>
           <ZoomInOut groupScale={groupScale} zoom={zoom} />
-          <UploadingImagesLoader isUploadingImage={isUploadingImage} /> 
-          <RemoteCursors/>
+          <UploadingImagesLoader isUploadingImage={isUploadingImage} />
+          <RemoteCursors />
         </section>
       </SidebarProvider>
-      <UsernameDialog/>
+      <UsernameDialog />
     </TooltipProvider>
   );
 }

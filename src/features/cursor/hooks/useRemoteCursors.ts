@@ -7,6 +7,8 @@ export const useRemoteCursors = () => {
 
     useEffect(() => {
         const unsubscribe = cursorService.subscribe((cursor) => {
+
+            console.log("cursor",cursor);
             setCursors(prev => ({
                 ...prev,
                 [cursor.userId]: cursor,
